@@ -10,11 +10,15 @@ Struktur folder:
     models/
         AQI_US/
             tft_Benowo_aqi_us_best.ckpt
+            hparams_best.json
+            tft_best_state_dict.pt
         AQI_CN/
             tft_Benowo_aqi_cn_best.ckpt
-    data/
-        pure_test_15_USpct.csv
-        pure_test_15_CNpct.csv
+            hparams_best.json
+            tft_best_state_dict.pt
+    pure_test_15_USpct.csv
+    pure_test_15_CNpct.csv
+    requirements.txt
 """
 
 import os
@@ -25,7 +29,7 @@ warnings.filterwarnings("ignore")
 
 import unittest.mock as mock
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import streamlit as st
 import pandas as pd
@@ -36,25 +40,27 @@ import plotly.graph_objects as go
 # ── Path config ────────────────────────────────────────────────────────────────
 APP_DIR = Path(__file__).parent
 
+# Model configs per target
 MODEL_CONFIGS = {
     "AQI US": {
-        "target"   : "aqi_us",
-        "label"    : "AQI US",
-        "ckpt_path": APP_DIR / "models" / "AQI_US" / "tft_Benowo_aqi_us_best.ckpt",
-        "csv_path" : APP_DIR / "data" / "pure_test_15_USpct.csv",
-        "color"    : "#636EFA",
-        "color2"   : "rgba(99,110,250,0.15)",
+        "target"    : "aqi_us",
+        "label"     : "AQI US",
+        "ckpt_path" : APP_DIR / "models" / "AQI_US" / "tft_Benowo_aqi_us_best.ckpt",
+        "csv_path"  : APP_DIR / "data" /"pure_test_15_USpct.csv",
+        "color"     : "#636EFA",
+        "color2"    : "rgba(99,110,250,0.15)",
     },
     "AQI CN": {
-        "target"   : "aqi_cn",
-        "label"    : "AQI CN",
-        "ckpt_path": APP_DIR / "models" / "AQI_CN" / "tft_Benowo_aqi_cn_best.ckpt",
-        "csv_path" : APP_DIR / "data" / "pure_test_15_CNpct.csv",
-        "color"    : "#00CC96",
-        "color2"   : "rgba(0,204,150,0.15)",
+        "target"    : "aqi_cn",
+        "label"     : "AQI CN",
+        "ckpt_path" : APP_DIR / "models" / "AQI_CN" / "tft_Benowo_aqi_cn_best.ckpt",
+        "csv_path"  : APP_DIR / "data" / "pure_test_15_CNpct.csv",
+        "color"     : "#00CC96",
+        "color2"    : "rgba(0,204,150,0.15)",
     },
 }
 
+# ── TFT config (shared) ───────────────────────────────────────────────────────
 STATION               = "Benowo"
 MAX_ENCODER_LENGTH    = 192
 MIN_ENCODER_LENGTH    = 96
@@ -72,11 +78,12 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Responsive CSS ─────────────────────────────────────────────────────────────
+# ── Dark elegant mobile-first UI ───────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ══ RESET & TOKENS ══ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -92,14 +99,15 @@ st.markdown("""
   --warn:      #d29922;
   --danger:    #f85149;
   --purple:    #bc8cff;
-  --radius:    14px;
-  --radius-sm: 9px;
+  --radius:    16px;
+  --radius-sm: 10px;
   --shadow:    0 4px 24px rgba(0,0,0,0.4);
   --font:      'Inter', sans-serif;
   --font-head: 'Syne', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+/* ══ BACKGROUND ══ */
 html, body,
 [data-testid="stAppViewContainer"] {
     background: var(--bg) !important;
@@ -114,39 +122,32 @@ html, body,
         radial-gradient(ellipse 50% 50% at 90% 80%, rgba(88,166,255,0.05) 0%, transparent 60%);
 }
 
+/* ══ HIDE STREAMLIT CHROME ══ */
 #MainMenu, footer, header,
 [data-testid="stDecoration"],
-[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stToolbar"]       { display: none !important; }
 
-/* ── MAIN CONTAINER (fluid, mobile-first) ── */
+/* ══ MAIN CONTAINER – mobile first ══ */
 .block-container {
-    padding: 0.75rem 0.75rem 4rem !important;
+    padding: 1rem 1rem 4rem !important;
     max-width: 100% !important;
-    width: 100% !important;
 }
-@media (min-width: 600px) {
-    .block-container { padding: 1.25rem 1.5rem 4rem !important; }
+@media (min-width: 768px) {
+    .block-container { padding: 1.5rem 2rem 4rem !important; }
 }
-@media (min-width: 1024px) {
-    .block-container { padding: 1.75rem 2.5rem 4rem !important; }
-}
-@media (min-width: 1400px) {
-    .block-container {
-        padding: 2rem 3.5rem 4rem !important;
-        max-width: 1500px !important;
-        margin: 0 auto !important;
-    }
+@media (min-width: 1200px) {
+    .block-container { padding: 2rem 3rem 4rem !important; max-width: 1400px !important; }
 }
 
-/* ── HERO ── */
+/* ══ HERO HEADER ══ */
 .aqi-hero {
     display: flex; flex-wrap: wrap; align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.9rem 1.1rem;
-    margin-bottom: 1rem;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.2rem;
     box-shadow: var(--shadow);
     position: relative; overflow: hidden;
 }
@@ -156,17 +157,17 @@ html, body,
     background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
 }
 .aqi-hero-icon {
-    width: 40px; height: 40px; flex-shrink: 0;
+    width: 44px; height: 44px; flex-shrink: 0;
     background: linear-gradient(135deg, rgba(57,211,83,0.15), rgba(88,166,255,0.15));
     border: 1px solid rgba(57,211,83,0.25);
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 }
-.aqi-hero-body { flex: 1; min-width: 160px; }
+.aqi-hero-body { flex: 1; min-width: 180px; }
 .aqi-hero-body h1 {
     font-family: var(--font-head) !important;
-    font-size: clamp(0.9rem, 2.8vw, 1.25rem) !important;
+    font-size: clamp(1rem, 3vw, 1.35rem) !important;
     font-weight: 700 !important;
     color: var(--text) !important;
     letter-spacing: -0.02em !important;
@@ -174,7 +175,7 @@ html, body,
     margin: 0 0 2px !important;
 }
 .aqi-hero-body p {
-    font-size: clamp(0.68rem, 1.6vw, 0.78rem) !important;
+    font-size: clamp(0.72rem, 1.8vw, 0.82rem) !important;
     color: var(--muted) !important;
     margin: 0 !important;
 }
@@ -182,106 +183,93 @@ html, body,
     background: rgba(57,211,83,0.1);
     border: 1px solid rgba(57,211,83,0.25);
     color: var(--accent);
-    border-radius: 30px; padding: 0.25rem 0.75rem;
-    font-size: 0.68rem; font-weight: 600;
+    border-radius: 30px; padding: 0.3rem 0.9rem;
+    font-size: 0.72rem; font-weight: 600;
     letter-spacing: 0.04em; white-space: nowrap;
     font-family: var(--font-mono);
 }
 
-/* ── SIDEBAR ── */
+/* ══ SIDEBAR ══ */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
 }
-[data-testid="stSidebar"] > div { padding: 1rem 0.9rem !important; }
+[data-testid="stSidebar"] > div {
+    padding: 1.2rem 1rem !important;
+}
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
     font-family: var(--font-head) !important;
-    font-size: 0.68rem !important; font-weight: 700 !important;
+    font-size: 0.7rem !important; font-weight: 700 !important;
     text-transform: uppercase !important; letter-spacing: 0.1em !important;
-    color: var(--muted) !important; margin-bottom: 0.5rem !important;
+    color: var(--muted) !important; margin-bottom: 0.6rem !important;
 }
 [data-testid="stSidebar"] .stRadio > label {
-    font-size: 0.82rem !important; color: var(--text) !important;
+    font-size: 0.85rem !important; color: var(--text) !important;
     font-weight: 500 !important;
 }
-[data-testid="stSidebar"] hr { border-color: var(--border) !important; margin: 0.8rem 0 !important; }
-[data-testid="stSidebar"] .stMarkdown p { font-size: 0.78rem !important; color: var(--muted) !important; }
-[data-testid="stSidebar"] code {
-    background: rgba(88,166,255,0.1) !important; color: var(--accent2) !important;
-    border-radius: 4px !important; font-family: var(--font-mono) !important;
-    font-size: 0.72rem !important; padding: 0.1em 0.3em !important;
+[data-testid="stSidebar"] [data-baseweb="radio"] {
+    gap: 0.25rem;
 }
-[data-testid="stSidebar"] [data-testid="stButton"] button { width: 100% !important; }
+[data-testid="stSidebar"] hr {
+    border-color: var(--border) !important; margin: 0.9rem 0 !important;
+}
+[data-testid="stSidebar"] .stMarkdown p {
+    font-size: 0.8rem !important; color: var(--muted) !important;
+}
+[data-testid="stSidebar"] code {
+    background: rgba(88,166,255,0.1) !important;
+    color: var(--accent2) !important;
+    border-radius: 5px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.75rem !important; padding: 0.1em 0.35em !important;
+}
+/* Sidebar button full-width */
+[data-testid="stSidebar"] [data-testid="stButton"] button {
+    width: 100% !important;
+}
 
-/* ── METRICS — fluid grid ── */
+/* ══ METRICS ══ */
 [data-testid="stMetric"] {
     background: var(--surface) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
-    padding: 0.85rem 1rem !important;
+    padding: 1rem 1.2rem !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+    position: relative; overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
-    width: 100%;
 }
 [data-testid="stMetric"]:hover {
     border-color: rgba(57,211,83,0.3) !important;
     box-shadow: 0 4px 20px rgba(57,211,83,0.1) !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 0.65rem !important; font-weight: 600 !important;
+    font-size: 0.68rem !important; font-weight: 600 !important;
     text-transform: uppercase !important; letter-spacing: 0.09em !important;
     color: var(--muted) !important;
 }
 [data-testid="stMetricValue"] {
     font-family: var(--font-mono) !important;
-    font-size: clamp(1.2rem, 3vw, 1.85rem) !important;
+    font-size: clamp(1.4rem, 3.5vw, 2rem) !important;
     font-weight: 500 !important; color: var(--text) !important;
     line-height: 1.15 !important;
 }
 
-/* ── COLUMNS: stack on small screens ── */
-/* Let Streamlit's default column flex work; only stack at very small */
-@media (max-width: 480px) {
-    [data-testid="stHorizontalBlock"] {
-        flex-direction: column !important;
-        gap: 0.5rem !important;
-    }
-    [data-testid="column"] {
-        width: 100% !important;
-        min-width: 100% !important;
-        flex: none !important;
-    }
-}
-@media (min-width: 481px) and (max-width: 767px) {
-    /* 2-column on medium-small: let flex wrap */
-    [data-testid="stHorizontalBlock"] {
-        flex-wrap: wrap !important;
-        gap: 0.5rem !important;
-    }
-    [data-testid="column"] {
-        min-width: calc(50% - 0.5rem) !important;
-        flex: 1 1 calc(50% - 0.5rem) !important;
-    }
-}
-[data-testid="stHorizontalBlock"] { gap: 0.65rem !important; }
-
-/* ── TABS ── */
+/* ══ TABS ══ */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: var(--surface) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
-    padding: 4px !important; gap: 3px !important;
+    padding: 5px !important; gap: 3px !important;
     flex-wrap: wrap !important;
-    overflow-x: auto !important;
 }
 [data-testid="stTabs"] [data-baseweb="tab"] {
     background: transparent !important;
     border-radius: var(--radius-sm) !important;
-    font-size: clamp(0.7rem, 1.8vw, 0.82rem) !important;
+    font-size: clamp(0.75rem, 2vw, 0.85rem) !important;
     font-weight: 600 !important; color: var(--muted) !important;
-    padding: 0.45rem 0.85rem !important; border: none !important;
+    padding: 0.5rem 1rem !important; border: none !important;
     transition: all 0.18s !important; white-space: nowrap;
 }
 [data-testid="stTabs"] [aria-selected="true"] {
@@ -289,17 +277,16 @@ html, body,
     box-shadow: 0 0 0 1px var(--border) !important;
 }
 [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
-[data-testid="stTabsContent"] { padding-top: 0.9rem !important; }
 
-/* ── BUTTONS ── */
+/* ══ BUTTONS ══ */
 button[kind="primary"] {
     background: linear-gradient(135deg, #2ea043, #1a7f37) !important;
     color: #fff !important; border: none !important;
     border-radius: var(--radius-sm) !important;
-    font-weight: 600 !important; font-size: 0.86rem !important;
-    padding: 0.5rem 1.2rem !important;
+    font-weight: 600 !important; font-size: 0.88rem !important;
+    padding: 0.55rem 1.4rem !important;
     box-shadow: 0 0 16px rgba(46,160,67,0.3) !important;
-    transition: all 0.18s !important;
+    transition: all 0.18s !important; font-family: var(--font) !important;
 }
 button[kind="primary"]:hover {
     box-shadow: 0 0 24px rgba(46,160,67,0.5) !important;
@@ -310,24 +297,26 @@ button[kind="secondary"], button:not([kind]) {
     color: var(--text) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
-    font-size: 0.83rem !important;
+    font-size: 0.85rem !important;
     transition: border-color 0.18s !important;
 }
 button[kind="secondary"]:hover, button:not([kind]):hover {
     border-color: var(--accent2) !important;
 }
 
-/* ── DOWNLOAD BUTTON ── */
+/* ══ DOWNLOAD BUTTON ══ */
 [data-testid="stDownloadButton"] button {
     background: rgba(88,166,255,0.08) !important;
     color: var(--accent2) !important;
     border: 1px solid rgba(88,166,255,0.25) !important;
     border-radius: var(--radius-sm) !important;
-    font-size: 0.8rem !important; font-weight: 600 !important;
+    font-size: 0.82rem !important; font-weight: 600 !important;
 }
-[data-testid="stDownloadButton"] button:hover { background: rgba(88,166,255,0.15) !important; }
+[data-testid="stDownloadButton"] button:hover {
+    background: rgba(88,166,255,0.15) !important;
+}
 
-/* ── EXPANDER ── */
+/* ══ EXPANDER ══ */
 [data-testid="stExpander"] {
     background: var(--surface) !important;
     border: 1px solid var(--border) !important;
@@ -335,30 +324,42 @@ button[kind="secondary"]:hover, button:not([kind]):hover {
     overflow: hidden !important;
 }
 [data-testid="stExpander"] summary {
-    font-weight: 600 !important; font-size: 0.83rem !important;
-    color: var(--text) !important; padding: 0.8rem 1rem !important;
+    font-weight: 600 !important; font-size: 0.85rem !important;
+    color: var(--text) !important; padding: 0.9rem 1.1rem !important;
 }
 
-/* ── DATAFRAME ── */
+/* ══ DATAFRAME ══ */
 [data-testid="stDataFrame"] {
     border-radius: var(--radius) !important;
     overflow: hidden !important;
     border: 1px solid var(--border) !important;
-    width: 100% !important;
 }
+/* DataFrame inner table */
 [data-testid="stDataFrame"] table {
     background: var(--surface) !important;
-    font-size: 0.78rem !important;
+    font-size: 0.8rem !important;
     font-family: var(--font-mono) !important;
 }
 
-/* ── ALERTS ── */
+/* ══ ALERTS ══ */
 [data-testid="stAlert"] {
     border-radius: var(--radius-sm) !important;
-    border: none !important; font-size: 0.83rem !important;
+    border: none !important; font-size: 0.85rem !important;
+}
+[data-testid="stAlert"][data-baseweb="notification"][kind="info"] {
+    background: rgba(88,166,255,0.08) !important; color: #a5c8ff !important;
+}
+[data-testid="stAlert"][data-baseweb="notification"][kind="success"] {
+    background: rgba(57,211,83,0.08) !important; color: #7ee787 !important;
+}
+[data-testid="stAlert"][data-baseweb="notification"][kind="warning"] {
+    background: rgba(210,153,34,0.1) !important; color: #e3b341 !important;
+}
+[data-testid="stAlert"][data-baseweb="notification"][kind="error"] {
+    background: rgba(248,81,73,0.1) !important; color: #ff7b72 !important;
 }
 
-/* ── INPUTS ── */
+/* ══ INPUTS ══ */
 [data-baseweb="input"], [data-baseweb="select"] > div:first-child {
     background: var(--surface2) !important;
     border-color: var(--border) !important;
@@ -370,10 +371,8 @@ input, textarea, select {
     color: var(--text) !important;
     border-radius: var(--radius-sm) !important;
 }
-/* number input width on mobile */
-[data-testid="stNumberInput"] { width: 100% !important; }
 
-/* ── SLIDER ── */
+/* ══ SLIDER ══ */
 [data-testid="stSlider"] [role="progressbar"] {
     background: linear-gradient(90deg, var(--accent), var(--accent2)) !important;
 }
@@ -382,64 +381,186 @@ input, textarea, select {
     box-shadow: 0 0 0 3px rgba(57,211,83,0.25) !important;
 }
 [data-testid="stSlider"] [data-testid="stSliderThumbValue"] {
-    background: var(--surface2) !important; color: var(--text) !important;
+    background: var(--surface2) !important;
+    color: var(--text) !important;
     border: 1px solid var(--border) !important;
-    font-family: var(--font-mono) !important; font-size: 0.72rem !important;
-    border-radius: 5px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.75rem !important;
+    border-radius: 6px !important;
 }
-[data-testid="stSlider"] [data-testid="stSliderTrack"] { background: var(--surface2) !important; }
+/* Slider track empty */
+[data-testid="stSlider"] [data-testid="stSliderTrack"] {
+    background: var(--surface2) !important;
+}
 
-/* ── PROGRESS ── */
+/* ══ PROGRESS BAR ══ */
 [data-testid="stProgress"] > div {
     background: linear-gradient(90deg, var(--accent), var(--accent2)) !important;
     border-radius: 6px !important;
 }
-[data-testid="stProgress"] { background: var(--surface2) !important; border-radius: 6px !important; }
+[data-testid="stProgress"] {
+    background: var(--surface2) !important;
+    border-radius: 6px !important;
+}
 
-/* ── SPINNER ── */
+/* ══ SPINNER ══ */
 [data-testid="stSpinner"] svg { color: var(--accent) !important; }
 
-/* ── TYPOGRAPHY ── */
+/* ══ TYPOGRAPHY ══ */
 h2 {
     font-family: var(--font-head) !important;
-    font-size: clamp(0.9rem, 2.2vw, 1.1rem) !important;
+    font-size: clamp(0.95rem, 2.5vw, 1.15rem) !important;
     font-weight: 700 !important; color: var(--text) !important;
     letter-spacing: -0.01em !important;
 }
 h3 {
     font-family: var(--font-head) !important;
-    font-size: clamp(0.82rem, 1.9vw, 0.97rem) !important;
+    font-size: clamp(0.85rem, 2vw, 1rem) !important;
     font-weight: 600 !important; color: var(--text) !important;
 }
 .stMarkdown p {
-    font-size: clamp(0.78rem, 1.8vw, 0.86rem) !important;
+    font-size: clamp(0.8rem, 2vw, 0.88rem) !important;
     color: var(--muted) !important; line-height: 1.65 !important;
 }
 strong { color: var(--text) !important; }
 code {
-    background: rgba(88,166,255,0.1) !important; color: var(--accent2) !important;
-    border-radius: 4px !important; font-family: var(--font-mono) !important;
-    font-size: 0.8em !important; padding: 0.1em 0.3em !important;
-}
-hr { border: none !important; border-top: 1px solid var(--border) !important; margin: 1rem 0 !important; }
-.stCaption, [data-testid="stCaptionContainer"] {
-    font-family: var(--font-mono) !important; font-size: 0.68rem !important; color: var(--muted) !important;
+    background: rgba(88,166,255,0.1) !important;
+    color: var(--accent2) !important;
+    border-radius: 5px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.8em !important; padding: 0.1em 0.35em !important;
 }
 
-/* ── POPOVER / SELECT ── */
+/* ══ HR ══ */
+hr {
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    margin: 1.2rem 0 !important;
+}
+
+/* ══ CAPTION / FOOTER ══ */
+.stCaption, [data-testid="stCaptionContainer"] {
+    font-family: var(--font-mono) !important;
+    font-size: 0.7rem !important; color: var(--muted) !important;
+}
+
+/* ══ SELECTBOX DROPDOWN ══ */
 [data-baseweb="popover"] { background: var(--surface2) !important; }
 [data-baseweb="menu"] { background: var(--surface2) !important; }
 [data-baseweb="menu"] li { color: var(--text) !important; }
 [data-baseweb="menu"] li:hover { background: var(--surface) !important; }
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ══ COLUMN GAPS ══ */
+[data-testid="stHorizontalBlock"] { gap: 0.75rem !important; }
+
+/* ══ TAB CONTENT ══ */
+[data-testid="stTabsContent"] { padding-top: 1rem !important; }
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ══ MOBILE RESPONSIVE ══ */
+@media (max-width: 640px) {
+    /* Stack semua kolom secara vertikal */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    [data-testid="column"] {
+        width: 100% !important; min-width: 100% !important;
+        flex: none !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+    }
+    [data-testid="stMetric"] {
+        padding: 0.75rem 1rem !important;
+    }
+    /* Grafik Plotly – bisa di-scroll horizontal tanpa blocking halaman */
+    [data-testid="stPlotlyChart"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x pan-y !important;
+    }
+    [data-testid="stPlotlyChart"] > div {
+        min-width: 320px !important;
+    }
+    /* Tab labels lebih kecil agar muat */
+    [data-testid="stTabs"] [data-baseweb="tab"] {
+        font-size: 0.7rem !important;
+        padding: 0.45rem 0.65rem !important;
+    }
+    /* Sidebar collapse hint */
+    .aqi-hero-body h1 {
+        font-size: 0.95rem !important;
+    }
+    .aqi-hero {
+        padding: 0.9rem 1rem !important;
+    }
+    /* Input number lebih besar untuk jari */
+    input[type="number"] {
+        font-size: 1rem !important;
+        padding: 0.5rem !important;
+        min-height: 44px !important;
+    }
+    /* Slider thumb lebih gampang disentuh */
+    [data-testid="stSlider"] [data-testid="stSliderThumb"] {
+        width: 22px !important; height: 22px !important;
+    }
+    /* Tombol primary full width di mobile */
+    button[kind="primary"] {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    /* Download button full width */
+    [data-testid="stDownloadButton"] { width: 100% !important; }
+    [data-testid="stDownloadButton"] button { width: 100% !important; }
+    /* Sub-header lebih ringkas */
+    h2 { font-size: 0.9rem !important; }
+    .stMarkdown p { font-size: 0.8rem !important; }
+    /* Expander padding mobile */
+    [data-testid="stExpander"] summary {
+        font-size: 0.8rem !important;
+        padding: 0.75rem 0.9rem !important;
+    }
+    /* Footer lebih kecil */
+    footer, .stCaption {
+        font-size: 0.62rem !important;
+    }
+    /* Block container less padding */
+    .block-container {
+        padding: 0.75rem 0.75rem 3rem !important;
+    }
+}
+
+/* Tablet: 2 kolom per baris untuk metric 4-grid */
+@media (min-width: 641px) and (max-width: 900px) {
+    [data-testid="stMetricValue"] {
+        font-size: 1.6rem !important;
+    }
+}
+
+/* ══ CHART CONTAINER – prevent page scroll hijack ══ */
+.js-plotly-plot .plotly {
+    touch-action: pan-y !important;
+}
+/* Grafik wrapper: sentuh dan swipe horizontal bisa */
+[data-testid="stPlotlyChart"] {
+    border-radius: var(--radius) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+}
+/* Pastikan grafik tidak overflow */
+[data-testid="stPlotlyChart"] .plot-container {
+    max-width: 100% !important;
+}
 </style>
 """, unsafe_allow_html=True)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HELPERS
@@ -458,6 +579,7 @@ def aqi_us_category(val):
 
 
 def aqi_cn_category(val):
+    """Kategori AQI berdasarkan standar China (GB3095-2012)."""
     if val is None or np.isnan(float(val)):
         return "N/A", "#888888"
     val = float(val)
@@ -574,10 +696,6 @@ def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def run_prediction(model, training_dataset, df_window: pd.DataFrame):
-    """
-    Jalankan inferensi TFT pada df_window.
-    df_window harus sudah punya time_idx yang kontinu dan semua kolom fitur.
-    """
     with mock.patch("torch.cuda.is_available", return_value=False):
         from pytorch_forecasting import TimeSeriesDataSet
 
@@ -599,45 +717,8 @@ def run_prediction(model, training_dataset, df_window: pd.DataFrame):
         return pred_q[:MAX_PREDICTION_LENGTH], actual[:MAX_PREDICTION_LENGTH]
 
 
-def build_manual_window(df_base: pd.DataFrame, target: str,
-                         manual_aqi: float, manual_pm25: float, manual_pm10: float) -> pd.DataFrame:
-    """
-    FIX: Bangun window context untuk input manual dengan benar.
-
-    Langkah:
-    1. Ambil MAX_ENCODER_LENGTH + MAX_PREDICTION_LENGTH baris terakhir dari df_base
-    2. Override nilai sensor pada baris TERAKHIR (jam paling baru)
-    3. Hitung ulang lag features SETELAH override agar konsisten
-    4. Reset time_idx supaya kontinu dan tidak konflik dengan training_dataset
-    """
-    # Ambil window yang cukup panjang
-    n_need  = MAX_ENCODER_LENGTH + MAX_PREDICTION_LENGTH
-    df_ctx  = df_base.tail(n_need).copy().reset_index(drop=True)
-
-    # Override nilai sensor pada baris terakhir (jam "sekarang")
-    last_idx = df_ctx.index[-1]
-    df_ctx.at[last_idx, target]  = manual_aqi
-    df_ctx.at[last_idx, "pm25"] = manual_pm25
-    df_ctx.at[last_idx, "pm10"] = manual_pm10
-
-    # Hitung ulang lag features agar konsisten dengan override di atas
-    for col, lags in [(target, [1, 24, 168]), ("pm25", [1, 24]), ("pm10", [1, 24])]:
-        for lag in lags:
-            df_ctx[f"{col}_lag{lag}"] = df_ctx[col].shift(lag).bfill()
-
-    # Pastikan time_idx kontinu (dimulai dari nilai terakhir di df_base minus panjang window)
-    # Kita gunakan time_idx asli yang sudah ada, cukup reset agar bersih
-    base_time_idx = int(df_base["time_idx"].iloc[-(n_need)])
-    df_ctx["time_idx"] = range(base_time_idx, base_time_idx + len(df_ctx))
-
-    # Pastikan kolom station ada dan bertipe string
-    df_ctx["station"] = STATION
-
-    return df_ctx
-
-
 # ══════════════════════════════════════════════════════════════════════════════
-# CHART HELPERS
+# AQI REFERENCE LINES
 # ══════════════════════════════════════════════════════════════════════════════
 
 AQI_HLINES = [
@@ -658,7 +739,8 @@ def add_aqi_hlines(fig):
     return fig
 
 
-def style_fig(fig):
+def style_fig(fig, mobile_height=300):
+    """Dark elegant chart styling with mobile config."""
     BG   = "#161b22"
     GRID = "rgba(255,255,255,0.05)"
     TICK = "#7d8590"
@@ -682,15 +764,32 @@ def style_fig(fig):
             bgcolor="rgba(22,27,34,0.8)",
             bordercolor="rgba(255,255,255,0.08)",
             borderwidth=1,
-            font=dict(size=11, color="#e6edf3"),
+            font=dict(size=10, color="#e6edf3"),
+            orientation="h",
+            yanchor="bottom", y=1.01,
+            xanchor="left", x=0,
         ),
-        margin=dict(l=8, r=8, t=44, b=8),
+        margin=dict(l=4, r=4, t=40, b=4),
         hoverlabel=dict(
             bgcolor="#1c2333", bordercolor="rgba(255,255,255,0.1)",
             font=dict(family="JetBrains Mono, monospace", size=11, color="#e6edf3"),
         ),
     )
+    # Config untuk mobile: allow pan & zoom tanpa block scroll
+    fig.update_layout(
+        dragmode="zoom",
+    )
     return fig
+
+
+# Config untuk semua chart: scroll mobile tidak terganggu
+PLOTLY_CONFIG = {
+    "scrollZoom": False,
+    "displayModeBar": True,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+    "displaylogo": False,
+    "responsive": True,
+}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -734,7 +833,6 @@ if not CKPT_PATH.exists():
 if not TEST_CSV.exists():
     st.error(f"❌ Data tidak ditemukan: `{TEST_CSV}`")
     st.stop()
-
 df_b = load_test_data(str(TEST_CSV), TARGET)
 
 with st.spinner(f"Memuat model TFT ({selected_model})…"):
@@ -765,7 +863,7 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TAB 1 — Prediksi dari Data Test
+# TAB 1
 # ─────────────────────────────────────────────────────────────────────────────
 with tab1:
     st.subheader(f"Prediksi {selected_model} dari Data Test (15% terakhir)")
@@ -841,10 +939,10 @@ with tab1:
         title=f"Prediksi {selected_model} 24 Jam — Mulai {pred_dt_start.strftime('%d %b %Y %H:00')}",
         xaxis_title="Waktu", yaxis_title=selected_model,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified", height=420, template="plotly_dark",
+        hovermode="x unified", height=380, template="plotly_dark",
     )
     fig = style_fig(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
     with st.expander("📋 Tabel Detail Prediksi vs Aktual"):
         df_result = pd.DataFrame({
@@ -859,66 +957,51 @@ with tab1:
         })
         st.dataframe(df_result, use_container_width=True, hide_index=True)
         csv_dl = df_result.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "⬇️ Download CSV", csv_dl,
-            f"prediksi_{TARGET}_{pred_dt_start.strftime('%Y%m%d_%H%M')}.csv",
-            "text/csv",
-        )
+        st.download_button("⬇️ Download CSV", csv_dl,
+                           f"prediksi_{TARGET}_{pred_dt_start.strftime('%Y%m%d_%H%M')}.csv",
+                           "text/csv")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TAB 2 — Input Manual  (BUG FIXED)
+# TAB 2
 # ─────────────────────────────────────────────────────────────────────────────
 with tab2:
     st.subheader(f"✏️ Input Manual Nilai {selected_model} Terkini")
     st.markdown(
         "Masukkan nilai sensor terbaru. Model akan menggunakan **192 jam data historis** "
-        "dari dataset, lalu **jam terakhir diganti** dengan nilai yang kamu masukkan, "
-        "kemudian memprediksi **24 jam berikutnya**."
+        "dari dataset, lalu **jam terakhir diganti** dengan nilai yang kamu masukkan."
     )
 
     col_a, col_b, col_c = st.columns(3)
-    manual_aqi  = col_a.number_input(
-        f"{selected_model} saat ini", min_value=0.0, max_value=500.0, value=100.0, step=1.0,
-        key="manual_aqi",
-    )
-    manual_pm25 = col_b.number_input(
-        "PM2.5 saat ini", min_value=0.0, max_value=500.0, value=50.0, step=1.0,
-        key="manual_pm25",
-    )
-    manual_pm10 = col_c.number_input(
-        "PM10 saat ini", min_value=0.0, max_value=500.0, value=80.0, step=1.0,
-        key="manual_pm10",
-    )
+    manual_aqi  = col_a.number_input(f"{selected_model} saat ini", 0.0, 500.0, 100.0, 1.0)
+    manual_pm25 = col_b.number_input("PM2.5 saat ini",             0.0, 500.0,  50.0, 1.0)
+    manual_pm10 = col_c.number_input("PM10 saat ini",              0.0, 500.0,  80.0, 1.0)
 
-    if st.button("🚀 Jalankan Prediksi Manual", type="primary", key="btn_manual"):
-        with st.spinner("Membangun context window dan menjalankan prediksi…"):
+    if st.button("🚀 Jalankan Prediksi Manual", type="primary"):
+        with st.spinner("Menjalankan prediksi…"):
             try:
-                # ── FIX: gunakan helper yang benar ──────────────────────────
-                df_ctx = build_manual_window(
-                    df_b, TARGET, manual_aqi, manual_pm25, manual_pm10
-                )
+                df_ctx = df_b.tail(MAX_ENCODER_LENGTH + MAX_PREDICTION_LENGTH).copy()
+                last   = df_ctx.index[-1]
+                df_ctx.loc[last, TARGET] = manual_aqi
+                df_ctx.loc[last, "pm25"] = manual_pm25
+                df_ctx.loc[last, "pm10"] = manual_pm10
+                for col, lags in [(TARGET, [1, 24, 168]), ("pm25", [1, 24]), ("pm10", [1, 24])]:
+                    for lag in lags:
+                        df_ctx[f"{col}_lag{lag}"] = df_ctx[col].shift(lag).bfill()
 
-                # Prediksi: tidak ada "actual" yang bermakna di sini
                 pred_q2, _ = run_prediction(model, training_dataset, df_ctx)
                 q10b, q50b, q90b = pred_q2[:, 0], pred_q2[:, 1], pred_q2[:, 2]
 
-                # Timestamp prediksi dimulai dari +1 jam setelah data terakhir
-                last_dt   = df_b["datetime_final"].iloc[-1]
-                start_dt2 = last_dt + timedelta(hours=1)
+                start_dt2 = df_b["datetime_final"].iloc[-1] + timedelta(hours=1)
                 dt_idx2   = [start_dt2 + timedelta(hours=i) for i in range(MAX_PREDICTION_LENGTH)]
 
-                # ── Metrics ──
                 ca, cb, cc = st.columns(3)
-                cat_h1, _  = aqi_category(q50b[0],  TARGET)
-                cat_h12, _ = aqi_category(q50b[11], TARGET)
-                cat_h24, _ = aqi_category(q50b[-1], TARGET)
-                ca.metric(f"{selected_model} H+1",  f"{q50b[0]:.1f}",  help=cat_h1)
-                cb.metric(f"{selected_model} H+12", f"{q50b[11]:.1f}", help=cat_h12)
-                cc.metric(f"{selected_model} H+24", f"{q50b[-1]:.1f}", help=cat_h24)
+                ca.metric(f"{selected_model} Prediksi H+1",  f"{q50b[0]:.1f}")
+                cb.metric(f"{selected_model} Prediksi H+12", f"{q50b[11]:.1f}")
+                cc.metric(f"{selected_model} Prediksi H+24", f"{q50b[-1]:.1f}")
 
-                st.info(f"Kategori {selected_model} jam +1: **{cat_h1}**")
+                cat2, _ = aqi_category(q50b[0], TARGET)
+                st.info(f"Kategori {selected_model} jam +1: **{cat2}**")
 
-                # ── Chart ──
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(
                     x=dt_idx2 + dt_idx2[::-1],
@@ -936,10 +1019,10 @@ with tab2:
                 fig2.update_layout(
                     title=f"Prediksi {selected_model} 24 Jam ke Depan (Input Manual)",
                     xaxis_title="Waktu", yaxis_title=selected_model,
-                    height=420, template="plotly_dark", hovermode="x unified",
+                    height=380, template="plotly_dark", hovermode="x unified",
                 )
                 fig2 = style_fig(fig2)
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
 
                 with st.expander("📋 Lihat semua nilai prediksi"):
                     df_manual_res = pd.DataFrame({
@@ -951,18 +1034,15 @@ with tab2:
                     })
                     st.dataframe(df_manual_res, use_container_width=True, hide_index=True)
                     csv_m = df_manual_res.to_csv(index=False).encode("utf-8")
-                    st.download_button(
-                        "⬇️ Download CSV", csv_m,
-                        f"prediksi_manual_{TARGET}.csv", "text/csv",
-                        key="dl_manual",
-                    )
+                    st.download_button("⬇️ Download CSV", csv_m,
+                                       f"prediksi_manual_{TARGET}.csv", "text/csv")
 
             except Exception as e:
                 st.error(f"❌ Prediksi gagal: {e}")
                 st.exception(e)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TAB 3 — Evaluasi Keseluruhan
+# TAB 3
 # ─────────────────────────────────────────────────────────────────────────────
 with tab3:
     st.subheader(f"📈 Evaluasi Model {selected_model} pada Data Test")
@@ -975,10 +1055,9 @@ with tab3:
         "Interval sampling (jam)",
         [24, 48, 72, 168], index=1,
         help="24 = setiap hari, 48 = setiap 2 hari, 168 = setiap 7 hari",
-        key="sample_step",
     )
 
-    if st.button("▶️ Jalankan Evaluasi", type="primary", key="btn_eval"):
+    if st.button("▶️ Jalankan Evaluasi", type="primary"):
         test_start_row = len(df_b) - n_test_eff
         windows = list(range(0, n_test_eff - MAX_PREDICTION_LENGTH, sample_step))
 
@@ -1010,8 +1089,9 @@ with tab3:
         if not all_q50:
             st.error("Tidak ada prediksi yang berhasil.")
         else:
-            q50_all  = np.concatenate(all_q50)
-            dt_all   = all_dt
+            q50_all = np.concatenate(all_q50)
+            dt_all  = all_dt
+
             act_all  = np.concatenate(all_actual)
             mae_all  = float(np.mean(np.abs(q50_all - act_all)))
             rmse_all = float(np.sqrt(np.mean((q50_all - act_all) ** 2)))
@@ -1042,11 +1122,11 @@ with tab3:
             fig3.update_layout(
                 title=f"Prediksi vs Aktual {selected_model} — Periode Test",
                 xaxis_title="Waktu", yaxis_title=selected_model,
-                height=420, template="plotly_dark", hovermode="x unified",
+                height=380, template="plotly_dark", hovermode="x unified",
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             )
             fig3 = style_fig(fig3)
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig3, use_container_width=True, config=PLOTLY_CONFIG)
 
             fig4 = go.Figure()
             fig4.add_trace(go.Scatter(
@@ -1067,10 +1147,10 @@ with tab3:
                 title=f"Scatter: Aktual vs Prediksi ({selected_model})",
                 xaxis_title=f"Aktual {selected_model}",
                 yaxis_title=f"Prediksi {selected_model} (Q50)",
-                height=420, template="plotly_dark",
+                height=380, template="plotly_dark",
             )
             fig4 = style_fig(fig4)
-            st.plotly_chart(fig4, use_container_width=True)
+            st.plotly_chart(fig4, use_container_width=True, config=PLOTLY_CONFIG)
 
             if len(all_q50) > 1:
                 errs  = np.array([np.abs(pq - act)
@@ -1086,16 +1166,16 @@ with tab3:
                 fig5.update_layout(
                     title=f"MAE per Horizon (H+1 s/d H+{MAX_PREDICTION_LENGTH}) — {selected_model}",
                     xaxis_title="Horizon (jam)", yaxis_title="MAE",
-                    height=340, template="plotly_dark",
+                    height=320, template="plotly_dark",
                 )
                 fig5 = style_fig(fig5)
-                st.plotly_chart(fig5, use_container_width=True)
+                st.plotly_chart(fig5, use_container_width=True, config=PLOTLY_CONFIG)
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center;padding:0.4rem 0 1rem;">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#7d8590;">
+<div style="text-align:center;padding:0.5rem 0 1rem;">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#7d8590;">
     🌬️ AQI Forecast · Stasiun Benowo · TFT (pytorch-forecasting) · EXP3 · dropout=0.25 · lr=3e-05 · hidden=64 · lstm_layers=2
   </span>
 </div>
