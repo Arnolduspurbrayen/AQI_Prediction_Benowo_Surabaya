@@ -569,6 +569,9 @@ def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
         hp   = ckpt["hyper_parameters"]
         sd   = ckpt["state_dict"]
 
+        for key in ["monotone_constraints", "monotone_constr_factor"]:
+             hp.pop(key, None)
+
         model = TemporalFusionTransformer(**hp)
         model.load_state_dict(sd, strict=False)
         model.eval()
