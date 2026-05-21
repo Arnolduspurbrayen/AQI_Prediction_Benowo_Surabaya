@@ -26,7 +26,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import warnings
 warnings.filterwarnings("ignore")
-import inspect   
+
+import inspect
 import unittest.mock as mock
 from pathlib import Path
 from datetime import timedelta, datetime
@@ -569,12 +570,12 @@ def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
         hp   = ckpt["hyper_parameters"]
         sd   = ckpt["state_dict"]
 
+        # Filter out unknown hyperparameters (compatibility with older checkpoints)
         valid_keys = set(inspect.signature(TemporalFusionTransformer.__init__).parameters.keys())
         valid_keys.discard("self")
         hp_clean = {k: v for k, v in hp.items() if k in valid_keys}
 
-
-        model = TemporalFusionTransformer(**hp)
+        model = TemporalFusionTransformer(**hp_clean)
         model.load_state_dict(sd, strict=False)
         model.eval()
 
