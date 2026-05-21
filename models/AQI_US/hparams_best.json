@@ -1,0 +1,12 @@
+{
+  "hidden_size": 64,
+  "lstm_layers": 2,
+  "attention_head_size": 2,
+  "hidden_continuous_size": 32,
+  "optimizer": "adamw",
+  "reduce_on_plateau_patience": 8,
+  "gradient_clip_val": 0.1,
+  "share_single_variable_networks": false,
+  "dropout": 0.3,
+  "learning_rate": 5e-05
+}
