@@ -75,495 +75,344 @@ TIME_VARYING_KNOWN_REAL = ["time_idx", "year", "hour_sin", "hour_cos",
 st.set_page_config(
     page_title="AQI Forecast · Benowo",
     page_icon="🌬️",
-    layout="wide",
+    layout="centered",
 )
 
-# ── Dark elegant mobile-first UI ───────────────────────────────────────────────
+# ── Mobile-first minimal UI ──────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ══ RESET & TOKENS ══ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #0d1117;
-  --surface:   #161b22;
-  --surface2:  #1c2333;
-  --border:    rgba(255,255,255,0.08);
-  --border2:   rgba(255,255,255,0.05);
-  --text:      #e6edf3;
-  --muted:     #7d8590;
-  --accent:    #39d353;
-  --accent2:   #58a6ff;
-  --warn:      #d29922;
-  --danger:    #f85149;
-  --purple:    #bc8cff;
-  --radius:    16px;
-  --radius-sm: 10px;
-  --shadow:    0 4px 24px rgba(0,0,0,0.4);
-  --font:      'Inter', sans-serif;
-  --font-head: 'Syne', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --bg:      #0a0d12;
+  --card:    #111620;
+  --card2:   #181f2e;
+  --border:  rgba(255,255,255,0.07);
+  --text:    #e2e8f0;
+  --muted:   #64748b;
+  --accent:  #38bdf8;
+  --green:   #34d399;
+  --red:     #f87171;
+  --radius:  14px;
+  --font:    'Inter', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
 }
 
-/* ══ BACKGROUND ══ */
-html, body,
-[data-testid="stAppViewContainer"] {
+html, body, [data-testid="stAppViewContainer"] {
     background: var(--bg) !important;
     color: var(--text) !important;
     font-family: var(--font) !important;
 }
-[data-testid="stAppViewContainer"]::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-        radial-gradient(ellipse 60% 40% at 10% 10%, rgba(57,211,83,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 50% at 90% 80%, rgba(88,166,255,0.05) 0%, transparent 60%);
-}
 
-/* ══ HIDE STREAMLIT CHROME ══ */
+/* ── HIDE CHROME ── */
 #MainMenu, footer, header,
 [data-testid="stDecoration"],
-[data-testid="stToolbar"]       { display: none !important; }
+[data-testid="stToolbar"],
+[data-testid="stSidebar"]        { display: none !important; }
 
-/* ══ MAIN CONTAINER – mobile first ══ */
+/* ── CONTAINER ── */
 .block-container {
-    padding: 1rem 1rem 4rem !important;
-    max-width: 100% !important;
+    padding: 1rem 1rem 3rem !important;
+    max-width: 680px !important;
+    margin: 0 auto !important;
 }
 @media (min-width: 768px) {
-    .block-container { padding: 1.5rem 2rem 4rem !important; }
-}
-@media (min-width: 1200px) {
-    .block-container { padding: 2rem 3rem 4rem !important; max-width: 1400px !important; }
+    .block-container {
+        padding: 1.5rem 1.5rem 3rem !important;
+        max-width: 860px !important;
+    }
 }
 
-/* ══ HERO HEADER ══ */
-.aqi-hero {
-    display: flex; flex-wrap: wrap; align-items: center;
-    gap: 0.75rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.4rem;
-    margin-bottom: 1.2rem;
-    box-shadow: var(--shadow);
-    position: relative; overflow: hidden;
+/* ── HERO ── */
+.hero {
+    padding: 1.25rem 0 0.5rem;
 }
-.aqi-hero::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
-}
-.aqi-hero-icon {
-    width: 44px; height: 44px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(57,211,83,0.15), rgba(88,166,255,0.15));
-    border: 1px solid rgba(57,211,83,0.25);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem;
-}
-.aqi-hero-body { flex: 1; min-width: 180px; }
-.aqi-hero-body h1 {
-    font-family: var(--font-head) !important;
-    font-size: clamp(1rem, 3vw, 1.35rem) !important;
+.hero-title {
+    font-size: 1.15rem !important;
     font-weight: 700 !important;
     color: var(--text) !important;
-    letter-spacing: -0.02em !important;
-    line-height: 1.2 !important;
-    margin: 0 0 2px !important;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin-bottom: 0.2rem;
 }
-.aqi-hero-body p {
-    font-size: clamp(0.72rem, 1.8vw, 0.82rem) !important;
+.hero-sub {
+    font-size: 0.78rem !important;
     color: var(--muted) !important;
-    margin: 0 !important;
 }
-.aqi-pill {
-    background: rgba(57,211,83,0.1);
-    border: 1px solid rgba(57,211,83,0.25);
-    color: var(--accent);
-    border-radius: 30px; padding: 0.3rem 0.9rem;
-    font-size: 0.72rem; font-weight: 600;
-    letter-spacing: 0.04em; white-space: nowrap;
-    font-family: var(--font-mono);
-}
-
-/* ══ SIDEBAR ══ */
-[data-testid="stSidebar"] {
-    background: var(--surface) !important;
-    border-right: 1px solid var(--border) !important;
-}
-[data-testid="stSidebar"] > div {
-    padding: 1.2rem 1rem !important;
-}
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    font-family: var(--font-head) !important;
-    font-size: 0.7rem !important; font-weight: 700 !important;
-    text-transform: uppercase !important; letter-spacing: 0.1em !important;
-    color: var(--muted) !important; margin-bottom: 0.6rem !important;
-}
-[data-testid="stSidebar"] .stRadio > label {
-    font-size: 0.85rem !important; color: var(--text) !important;
-    font-weight: 500 !important;
-}
-[data-testid="stSidebar"] [data-baseweb="radio"] {
-    gap: 0.25rem;
-}
-[data-testid="stSidebar"] hr {
-    border-color: var(--border) !important; margin: 0.9rem 0 !important;
-}
-[data-testid="stSidebar"] .stMarkdown p {
-    font-size: 0.8rem !important; color: var(--muted) !important;
-}
-[data-testid="stSidebar"] code {
-    background: rgba(88,166,255,0.1) !important;
-    color: var(--accent2) !important;
-    border-radius: 5px !important;
-    font-family: var(--font-mono) !important;
-    font-size: 0.75rem !important; padding: 0.1em 0.35em !important;
-}
-/* Sidebar button full-width */
-[data-testid="stSidebar"] [data-testid="stButton"] button {
-    width: 100% !important;
+.hero-badge {
+    display: inline-block;
+    background: rgba(52,211,153,0.12);
+    color: var(--green);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 20px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.68rem;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 0.5rem;
 }
 
-/* ══ METRICS ══ */
+/* ── DIVIDER ── */
+hr {
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    margin: 0.8rem 0 !important;
+}
+
+/* ── MODEL SELECTOR (radio) ── */
+[data-testid="stRadio"] > label {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: var(--muted) !important;
+    margin-bottom: 0.4rem !important;
+}
+[data-baseweb="radio"] { gap: 0.5rem !important; }
+[data-baseweb="radio"] label {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.82rem !important;
+    color: var(--text) !important;
+    transition: border-color 0.15s !important;
+}
+[data-baseweb="radio"] label:has(input:checked) {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    background: rgba(56,189,248,0.06) !important;
+}
+
+/* ── METRIC CARDS ── */
 [data-testid="stMetric"] {
-    background: var(--surface) !important;
+    background: var(--card) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
-    padding: 1rem 1.2rem !important;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
-    position: relative; overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-[data-testid="stMetric"]:hover {
-    border-color: rgba(57,211,83,0.3) !important;
-    box-shadow: 0 4px 20px rgba(57,211,83,0.1) !important;
+    padding: 0.9rem 1rem !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 0.68rem !important; font-weight: 600 !important;
-    text-transform: uppercase !important; letter-spacing: 0.09em !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.09em !important;
     color: var(--muted) !important;
 }
 [data-testid="stMetricValue"] {
-    font-family: var(--font-mono) !important;
-    font-size: clamp(1.4rem, 3.5vw, 2rem) !important;
-    font-weight: 500 !important; color: var(--text) !important;
-    line-height: 1.15 !important;
+    font-family: var(--mono) !important;
+    font-size: 1.6rem !important;
+    font-weight: 500 !important;
+    color: var(--text) !important;
+    line-height: 1.2 !important;
 }
+[data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
 
-/* ══ TABS ══ */
+/* ── COLUMNS gap ── */
+[data-testid="stHorizontalBlock"] { gap: 0.6rem !important; }
+
+/* ── TABS ── */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
-    background: var(--surface) !important;
+    background: var(--card) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
-    padding: 5px !important; gap: 3px !important;
-    flex-wrap: wrap !important;
+    padding: 4px !important;
+    gap: 2px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
 }
 [data-testid="stTabs"] [data-baseweb="tab"] {
     background: transparent !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: clamp(0.75rem, 2vw, 0.85rem) !important;
-    font-weight: 600 !important; color: var(--muted) !important;
-    padding: 0.5rem 1rem !important; border: none !important;
-    transition: all 0.18s !important; white-space: nowrap;
+    border-radius: 10px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
+    padding: 0.45rem 0.85rem !important;
+    border: none !important;
+    white-space: nowrap !important;
+    transition: all 0.15s !important;
 }
 [data-testid="stTabs"] [aria-selected="true"] {
-    background: var(--surface2) !important; color: var(--text) !important;
-    box-shadow: 0 0 0 1px var(--border) !important;
+    background: var(--card2) !important;
+    color: var(--text) !important;
 }
 [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
+[data-testid="stTabsContent"] { padding-top: 1rem !important; }
 
-/* ══ BUTTONS ══ */
+/* ── CHART WRAPPER ── */
+[data-testid="stPlotlyChart"] {
+    border-radius: var(--radius) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border) !important;
+    background: var(--card) !important;
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--muted) !important;
+    margin-bottom: 0.6rem !important;
+    margin-top: 1rem !important;
+    display: block;
+}
+
+/* ── SLIDER ── */
+[data-testid="stSlider"] [role="progressbar"] {
+    background: linear-gradient(90deg, var(--accent), var(--green)) !important;
+}
+[data-testid="stSlider"] [data-testid="stSliderThumb"] {
+    background: var(--accent) !important;
+    width: 20px !important; height: 20px !important;
+}
+[data-testid="stSlider"] > label {
+    font-size: 0.78rem !important;
+    color: var(--muted) !important;
+    font-weight: 500 !important;
+}
+
+/* ── INPUTS ── */
+[data-baseweb="input"] > div,
+[data-baseweb="select"] > div:first-child {
+    background: var(--card2) !important;
+    border-color: var(--border) !important;
+    border-radius: 10px !important;
+    color: var(--text) !important;
+}
+input, textarea { color: var(--text) !important; }
+[data-testid="stNumberInput"] label,
+[data-testid="stSelectbox"] label {
+    font-size: 0.75rem !important;
+    color: var(--muted) !important;
+    font-weight: 500 !important;
+}
+
+/* ── BUTTONS ── */
 button[kind="primary"] {
-    background: linear-gradient(135deg, #2ea043, #1a7f37) !important;
-    color: #fff !important; border: none !important;
-    border-radius: var(--radius-sm) !important;
-    font-weight: 600 !important; font-size: 0.88rem !important;
-    padding: 0.55rem 1.4rem !important;
-    box-shadow: 0 0 16px rgba(46,160,67,0.3) !important;
-    transition: all 0.18s !important; font-family: var(--font) !important;
+    background: var(--accent) !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 0.6rem 1.5rem !important;
+    transition: opacity 0.15s !important;
+    width: 100% !important;
 }
-button[kind="primary"]:hover {
-    box-shadow: 0 0 24px rgba(46,160,67,0.5) !important;
-    transform: translateY(-1px) !important;
-}
+button[kind="primary"]:hover { opacity: 0.85 !important; }
 button[kind="secondary"], button:not([kind]) {
-    background: var(--surface2) !important;
+    background: var(--card2) !important;
     color: var(--text) !important;
     border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: 0.85rem !important;
-    transition: border-color 0.18s !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
 }
-button[kind="secondary"]:hover, button:not([kind]):hover {
-    border-color: var(--accent2) !important;
-}
-
-/* ══ DOWNLOAD BUTTON ══ */
 [data-testid="stDownloadButton"] button {
-    background: rgba(88,166,255,0.08) !important;
-    color: var(--accent2) !important;
-    border: 1px solid rgba(88,166,255,0.25) !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: 0.82rem !important; font-weight: 600 !important;
-}
-[data-testid="stDownloadButton"] button:hover {
-    background: rgba(88,166,255,0.15) !important;
+    background: transparent !important;
+    color: var(--accent) !important;
+    border: 1px solid rgba(56,189,248,0.3) !important;
+    border-radius: 10px !important;
+    font-size: 0.8rem !important;
+    width: 100% !important;
 }
 
-/* ══ EXPANDER ══ */
+/* ── EXPANDER ── */
 [data-testid="stExpander"] {
-    background: var(--surface) !important;
+    background: var(--card) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
     overflow: hidden !important;
 }
 [data-testid="stExpander"] summary {
-    font-weight: 600 !important; font-size: 0.85rem !important;
-    color: var(--text) !important; padding: 0.9rem 1.1rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    padding: 0.8rem 1rem !important;
 }
 
-/* ══ DATAFRAME ══ */
+/* ── DATAFRAME ── */
 [data-testid="stDataFrame"] {
     border-radius: var(--radius) !important;
+    border: 1px solid var(--border) !important;
     overflow: hidden !important;
-    border: 1px solid var(--border) !important;
-}
-/* DataFrame inner table */
-[data-testid="stDataFrame"] table {
-    background: var(--surface) !important;
-    font-size: 0.8rem !important;
-    font-family: var(--font-mono) !important;
+    font-size: 0.78rem !important;
 }
 
-/* ══ ALERTS ══ */
+/* ── ALERTS ── */
 [data-testid="stAlert"] {
-    border-radius: var(--radius-sm) !important;
-    border: none !important; font-size: 0.85rem !important;
-}
-[data-testid="stAlert"][data-baseweb="notification"][kind="info"] {
-    background: rgba(88,166,255,0.08) !important; color: #a5c8ff !important;
-}
-[data-testid="stAlert"][data-baseweb="notification"][kind="success"] {
-    background: rgba(57,211,83,0.08) !important; color: #7ee787 !important;
-}
-[data-testid="stAlert"][data-baseweb="notification"][kind="warning"] {
-    background: rgba(210,153,34,0.1) !important; color: #e3b341 !important;
-}
-[data-testid="stAlert"][data-baseweb="notification"][kind="error"] {
-    background: rgba(248,81,73,0.1) !important; color: #ff7b72 !important;
+    border-radius: 10px !important;
+    border: none !important;
+    font-size: 0.82rem !important;
 }
 
-/* ══ INPUTS ══ */
-[data-baseweb="input"], [data-baseweb="select"] > div:first-child {
-    background: var(--surface2) !important;
-    border-color: var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    color: var(--text) !important;
-}
-input, textarea, select {
-    background: var(--surface2) !important;
-    color: var(--text) !important;
-    border-radius: var(--radius-sm) !important;
-}
-
-/* ══ SLIDER ══ */
-[data-testid="stSlider"] [role="progressbar"] {
-    background: linear-gradient(90deg, var(--accent), var(--accent2)) !important;
-}
-[data-testid="stSlider"] [data-testid="stSliderThumb"] {
-    background: var(--accent) !important;
-    box-shadow: 0 0 0 3px rgba(57,211,83,0.25) !important;
-}
-[data-testid="stSlider"] [data-testid="stSliderThumbValue"] {
-    background: var(--surface2) !important;
-    color: var(--text) !important;
-    border: 1px solid var(--border) !important;
-    font-family: var(--font-mono) !important;
-    font-size: 0.75rem !important;
-    border-radius: 6px !important;
-}
-/* Slider track empty */
-[data-testid="stSlider"] [data-testid="stSliderTrack"] {
-    background: var(--surface2) !important;
-}
-
-/* ══ PROGRESS BAR ══ */
+/* ── PROGRESS ── */
 [data-testid="stProgress"] > div {
-    background: linear-gradient(90deg, var(--accent), var(--accent2)) !important;
+    background: linear-gradient(90deg, var(--accent), var(--green)) !important;
     border-radius: 6px !important;
 }
 [data-testid="stProgress"] {
-    background: var(--surface2) !important;
+    background: var(--card2) !important;
     border-radius: 6px !important;
 }
 
-/* ══ SPINNER ══ */
-[data-testid="stSpinner"] svg { color: var(--accent) !important; }
-
-/* ══ TYPOGRAPHY ══ */
-h2 {
-    font-family: var(--font-head) !important;
-    font-size: clamp(0.95rem, 2.5vw, 1.15rem) !important;
-    font-weight: 700 !important; color: var(--text) !important;
+/* ── TYPOGRAPHY ── */
+h2, h3 {
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
     letter-spacing: -0.01em !important;
-}
-h3 {
-    font-family: var(--font-head) !important;
-    font-size: clamp(0.85rem, 2vw, 1rem) !important;
-    font-weight: 600 !important; color: var(--text) !important;
+    margin-bottom: 0.25rem !important;
 }
 .stMarkdown p {
-    font-size: clamp(0.8rem, 2vw, 0.88rem) !important;
-    color: var(--muted) !important; line-height: 1.65 !important;
+    font-size: 0.82rem !important;
+    color: var(--muted) !important;
+    line-height: 1.6 !important;
 }
 strong { color: var(--text) !important; }
 code {
-    background: rgba(88,166,255,0.1) !important;
-    color: var(--accent2) !important;
+    background: rgba(56,189,248,0.1) !important;
+    color: var(--accent) !important;
     border-radius: 5px !important;
-    font-family: var(--font-mono) !important;
-    font-size: 0.8em !important; padding: 0.1em 0.35em !important;
+    font-family: var(--mono) !important;
+    font-size: 0.78em !important;
+    padding: 0.1em 0.35em !important;
 }
 
-/* ══ HR ══ */
-hr {
-    border: none !important;
-    border-top: 1px solid var(--border) !important;
-    margin: 1.2rem 0 !important;
-}
-
-/* ══ CAPTION / FOOTER ══ */
-.stCaption, [data-testid="stCaptionContainer"] {
-    font-family: var(--font-mono) !important;
-    font-size: 0.7rem !important; color: var(--muted) !important;
-}
-
-/* ══ SELECTBOX DROPDOWN ══ */
-[data-baseweb="popover"] { background: var(--surface2) !important; }
-[data-baseweb="menu"] { background: var(--surface2) !important; }
-[data-baseweb="menu"] li { color: var(--text) !important; }
-[data-baseweb="menu"] li:hover { background: var(--surface) !important; }
-
-/* ══ COLUMN GAPS ══ */
-[data-testid="stHorizontalBlock"] { gap: 0.75rem !important; }
-
-/* ══ TAB CONTENT ══ */
-[data-testid="stTabsContent"] { padding-top: 1rem !important; }
-
-/* ══ SCROLLBAR ══ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 2px; }
 
-/* ══ MOBILE RESPONSIVE ══ */
-@media (max-width: 640px) {
-    /* Stack semua kolom secara vertikal */
+/* ── MOBILE STACKS ── */
+@media (max-width: 600px) {
     [data-testid="stHorizontalBlock"] {
         flex-direction: column !important;
         gap: 0.5rem !important;
     }
     [data-testid="column"] {
-        width: 100% !important; min-width: 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
         flex: none !important;
     }
-    [data-testid="stMetricValue"] {
-        font-size: 1.5rem !important;
-    }
-    [data-testid="stMetric"] {
-        padding: 0.75rem 1rem !important;
-    }
-    /* Grafik Plotly – bisa di-scroll horizontal tanpa blocking halaman */
-    [data-testid="stPlotlyChart"] {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-x pan-y !important;
-    }
-    [data-testid="stPlotlyChart"] > div {
-        min-width: 320px !important;
-    }
-    /* Tab labels lebih kecil agar muat */
+    [data-testid="stMetricValue"] { font-size: 1.4rem !important; }
+    .block-container { padding: 0.75rem 0.75rem 3rem !important; }
+    button[kind="primary"] { padding: 0.65rem 1rem !important; }
     [data-testid="stTabs"] [data-baseweb="tab"] {
-        font-size: 0.7rem !important;
-        padding: 0.45rem 0.65rem !important;
+        font-size: 0.72rem !important;
+        padding: 0.4rem 0.6rem !important;
     }
-    /* Sidebar collapse hint */
-    .aqi-hero-body h1 {
-        font-size: 0.95rem !important;
-    }
-    .aqi-hero {
-        padding: 0.9rem 1rem !important;
-    }
-    /* Input number lebih besar untuk jari */
-    input[type="number"] {
-        font-size: 1rem !important;
-        padding: 0.5rem !important;
-        min-height: 44px !important;
-    }
-    /* Slider thumb lebih gampang disentuh */
-    [data-testid="stSlider"] [data-testid="stSliderThumb"] {
-        width: 22px !important; height: 22px !important;
-    }
-    /* Tombol primary full width di mobile */
-    button[kind="primary"] {
-        width: 100% !important;
-        padding: 0.75rem 1rem !important;
-        font-size: 0.95rem !important;
-    }
-    /* Download button full width */
-    [data-testid="stDownloadButton"] { width: 100% !important; }
-    [data-testid="stDownloadButton"] button { width: 100% !important; }
-    /* Sub-header lebih ringkas */
-    h2 { font-size: 0.9rem !important; }
-    .stMarkdown p { font-size: 0.8rem !important; }
-    /* Expander padding mobile */
-    [data-testid="stExpander"] summary {
-        font-size: 0.8rem !important;
-        padding: 0.75rem 0.9rem !important;
-    }
-    /* Footer lebih kecil */
-    footer, .stCaption {
-        font-size: 0.62rem !important;
-    }
-    /* Block container less padding */
-    .block-container {
-        padding: 0.75rem 0.75rem 3rem !important;
-    }
-}
-
-/* Tablet: 2 kolom per baris untuk metric 4-grid */
-@media (min-width: 641px) and (max-width: 900px) {
-    [data-testid="stMetricValue"] {
-        font-size: 1.6rem !important;
-    }
-}
-
-/* ══ CHART CONTAINER – prevent page scroll hijack ══ */
-.js-plotly-plot .plotly {
-    touch-action: pan-y !important;
-}
-/* Grafik wrapper: sentuh dan swipe horizontal bisa */
-[data-testid="stPlotlyChart"] {
-    border-radius: var(--radius) !important;
-    overflow: hidden !important;
-    border: 1px solid var(--border) !important;
-    background: var(--surface) !important;
-}
-/* Pastikan grafik tidak overflow */
-[data-testid="stPlotlyChart"] .plot-container {
-    max-width: 100% !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HELPERS
+
 # ══════════════════════════════════════════════════════════════════════════════
 
 def aqi_us_category(val):
@@ -759,17 +608,17 @@ def style_fig(fig, mobile_height=300):
     fig.update_layout(
         paper_bgcolor=BG, plot_bgcolor=BG,
         font=dict(family="Inter, sans-serif", color="#e6edf3"),
-        title_font=dict(family="Syne, sans-serif", size=14, color="#e6edf3"),
+        title_font=dict(family="Inter, sans-serif", size=13, color="#cbd5e1", weight=600),
         legend=dict(
-            bgcolor="rgba(22,27,34,0.8)",
-            bordercolor="rgba(255,255,255,0.08)",
+            bgcolor="rgba(17,22,32,0.9)",
+            bordercolor="rgba(255,255,255,0.07)",
             borderwidth=1,
-            font=dict(size=10, color="#e6edf3"),
+            font=dict(size=10, color="#94a3b8"),
             orientation="h",
-            yanchor="bottom", y=1.01,
+            yanchor="top", y=-0.15,
             xanchor="left", x=0,
         ),
-        margin=dict(l=4, r=4, t=40, b=4),
+        margin=dict(l=8, r=8, t=56, b=8),
         hoverlabel=dict(
             bgcolor="#1c2333", bordercolor="rgba(255,255,255,0.1)",
             font=dict(family="JetBrains Mono, monospace", size=11, color="#e6edf3"),
@@ -793,27 +642,23 @@ PLOTLY_CONFIG = {
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR
+# HEADER + MODEL SELECTOR
 # ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown("""
-<div class="aqi-hero">
-  <div class="aqi-hero-icon">🌬️</div>
-  <div class="aqi-hero-body">
-    <h1>AQI Forecast · Stasiun Benowo</h1>
-    <p>Prediksi kualitas udara 24 jam ke depan · Temporal Fusion Transformer · EXP3</p>
-  </div>
-  <div class="aqi-pill">● LIVE</div>
+<div class="hero">
+  <div class="hero-title">AQI Forecast &middot; Benowo <span class="hero-badge">&#9679; LIVE</span></div>
+  <div class="hero-sub">Prediksi kualitas udara 24 jam ke depan &middot; Temporal Fusion Transformer</div>
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("### Konfigurasi")
-
-selected_model = st.sidebar.radio(
-    "🎯 Pilih Target Model:",
+selected_model = st.radio(
+    "Model",
     list(MODEL_CONFIGS.keys()),
     index=0,
+    horizontal=True,
     help="AQI US = standar EPA Amerika. AQI CN = standar China (GB3095).",
+    label_visibility="collapsed",
 )
 
 cfg        = MODEL_CONFIGS[selected_model]
@@ -823,51 +668,35 @@ TEST_CSV   = cfg["csv_path"]
 LINE_COLOR = cfg["color"]
 FILL_COLOR = cfg["color2"]
 
-st.sidebar.markdown(f"Model aktif: **`{selected_model}`** (`{TARGET}`)")
-st.sidebar.markdown("---")
-
 if not CKPT_PATH.exists():
-    st.error(f"❌ Checkpoint tidak ditemukan: `{CKPT_PATH}`")
-    st.info(f"Pastikan file ada di: `models/{selected_model.replace(' ', '_')}/`")
+    st.error(f"Checkpoint tidak ditemukan: {CKPT_PATH}")
     st.stop()
 if not TEST_CSV.exists():
-    st.error(f"❌ Data tidak ditemukan: `{TEST_CSV}`")
+    st.error(f"Data tidak ditemukan: {TEST_CSV}")
     st.stop()
 df_b = load_test_data(str(TEST_CSV), TARGET)
 
-with st.spinner(f"Memuat model TFT ({selected_model})…"):
+with st.spinner(f"Memuat model {selected_model}..."):
     try:
         model, training_dataset, n_test = load_model_and_dataset(
             str(CKPT_PATH), df_b, TARGET)
     except Exception as e:
-        st.error(f"❌ Gagal memuat model: {e}")
+        st.error(f"Gagal memuat model: {e}")
         st.stop()
 
 n_test_eff = int(len(df_b) * 0.15)
-st.sidebar.markdown("---")
-st.sidebar.markdown(f"""
-**Info Data ({selected_model}):**
-- Total     : `{len(df_b):,}` jam
-- Periode   : `{df_b['datetime_final'].iloc[0].date()}` → `{df_b['datetime_final'].iloc[-1].date()}`
-- Test (15%): `{n_test_eff}` jam terakhir
-""")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
 
-tab1, tab2, tab3 = st.tabs([
-    "📊 Prediksi dari Data Test",
-    "✏️ Input Manual",
-    "📈 Evaluasi Keseluruhan",
-])
+tab1, tab2, tab3 = st.tabs(["📊 Prediksi", "✏️ Manual", "📈 Evaluasi"])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 1
 # ─────────────────────────────────────────────────────────────────────────────
 with tab1:
-    st.subheader(f"Prediksi {selected_model} dari Data Test (15% terakhir)")
-    st.markdown("Geser slider untuk memilih titik awal prediksi dalam periode test.")
+    st.markdown(f'<span class="section-label">Prediksi {selected_model} · Data Test</span>', unsafe_allow_html=True)
 
     test_start_row = len(df_b) - n_test_eff
     max_offset     = max(0, n_test_eff - MAX_PREDICTION_LENGTH - 1)
@@ -888,10 +717,9 @@ with tab1:
     df_window      = df_b.iloc[window_start:window_end].copy()
     pred_dt_start  = df_b["datetime_final"].iloc[pred_start_row]
 
-    st.markdown(
-        f"**Periode prediksi:** "
-        f"`{pred_dt_start.strftime('%Y-%m-%d %H:00')}` → "
-        f"`{(pred_dt_start + timedelta(hours=MAX_PREDICTION_LENGTH-1)).strftime('%Y-%m-%d %H:00')}`"
+    st.caption(
+        f"Periode: {pred_dt_start.strftime('%d %b %Y %H:00')} → "
+        f"{(pred_dt_start + timedelta(hours=MAX_PREDICTION_LENGTH-1)).strftime('%d %b %Y %H:00')}"
     )
 
     with st.spinner("Menjalankan prediksi…"):
@@ -936,10 +764,9 @@ with tab1:
     ))
     fig = add_aqi_hlines(fig)
     fig.update_layout(
-        title=f"Prediksi {selected_model} 24 Jam — Mulai {pred_dt_start.strftime('%d %b %Y %H:00')}",
+        title=f"Prediksi 24 Jam · {pred_dt_start.strftime('%d %b %Y')}",
         xaxis_title="Waktu", yaxis_title=selected_model,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified", height=380, template="plotly_dark",
+        hovermode="x unified", height=360, template="plotly_dark",
     )
     fig = style_fig(fig)
     st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
@@ -965,11 +792,8 @@ with tab1:
 # TAB 2
 # ─────────────────────────────────────────────────────────────────────────────
 with tab2:
-    st.subheader(f"✏️ Input Manual Nilai {selected_model} Terkini")
-    st.markdown(
-        "Masukkan nilai sensor terbaru. Model akan menggunakan **192 jam data historis** "
-        "dari dataset, lalu **jam terakhir diganti** dengan nilai yang kamu masukkan."
-    )
+    st.markdown(f'<span class="section-label">Input Manual · {selected_model}</span>', unsafe_allow_html=True)
+    st.caption("Masukkan nilai sensor terkini. Jam terakhir akan diganti dengan nilai ini.")
 
     col_a, col_b, col_c = st.columns(3)
     manual_aqi  = col_a.number_input(f"{selected_model} saat ini", 0.0, 500.0, 100.0, 1.0)
@@ -1000,7 +824,7 @@ with tab2:
                 cc.metric(f"{selected_model} Prediksi H+24", f"{q50b[-1]:.1f}")
 
                 cat2, _ = aqi_category(q50b[0], TARGET)
-                st.info(f"Kategori {selected_model} jam +1: **{cat2}**")
+                st.caption(f"Kategori jam +1: {cat2}")
 
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(
@@ -1017,9 +841,9 @@ with tab2:
                 ))
                 fig2 = add_aqi_hlines(fig2)
                 fig2.update_layout(
-                    title=f"Prediksi {selected_model} 24 Jam ke Depan (Input Manual)",
+                    title="Prediksi 24 Jam (Input Manual)",
                     xaxis_title="Waktu", yaxis_title=selected_model,
-                    height=380, template="plotly_dark", hovermode="x unified",
+                    height=360, template="plotly_dark", hovermode="x unified",
                 )
                 fig2 = style_fig(fig2)
                 st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
@@ -1045,11 +869,8 @@ with tab2:
 # TAB 3
 # ─────────────────────────────────────────────────────────────────────────────
 with tab3:
-    st.subheader(f"📈 Evaluasi Model {selected_model} pada Data Test")
-    st.markdown(
-        "Sampling prediksi setiap **N jam** pada periode test. "
-        "Klik tombol untuk memulai (butuh beberapa menit)."
-    )
+    st.markdown(f'<span class="section-label">Evaluasi · {selected_model}</span>', unsafe_allow_html=True)
+    st.caption("Sampling prediksi per-N jam. Proses butuh beberapa menit.")
 
     sample_step = st.selectbox(
         "Interval sampling (jam)",
@@ -1120,11 +941,10 @@ with tab3:
             ))
             fig3 = add_aqi_hlines(fig3)
             fig3.update_layout(
-                title=f"Prediksi vs Aktual {selected_model} — Periode Test",
+                title="Prediksi vs Aktual",
                 xaxis_title="Waktu", yaxis_title=selected_model,
-                height=380, template="plotly_dark", hovermode="x unified",
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            )
+                height=360, template="plotly_dark", hovermode="x unified",
+                    )
             fig3 = style_fig(fig3)
             st.plotly_chart(fig3, use_container_width=True, config=PLOTLY_CONFIG)
 
@@ -1144,10 +964,10 @@ with tab3:
                 name="Ideal (y=x)",
             ))
             fig4.update_layout(
-                title=f"Scatter: Aktual vs Prediksi ({selected_model})",
+                title="Scatter · Aktual vs Prediksi",
                 xaxis_title=f"Aktual {selected_model}",
                 yaxis_title=f"Prediksi {selected_model} (Q50)",
-                height=380, template="plotly_dark",
+                height=360, template="plotly_dark",
             )
             fig4 = style_fig(fig4)
             st.plotly_chart(fig4, use_container_width=True, config=PLOTLY_CONFIG)
@@ -1164,9 +984,9 @@ with tab3:
                     name="MAE per Horizon",
                 ))
                 fig5.update_layout(
-                    title=f"MAE per Horizon (H+1 s/d H+{MAX_PREDICTION_LENGTH}) — {selected_model}",
+                    title="MAE per Horizon",
                     xaxis_title="Horizon (jam)", yaxis_title="MAE",
-                    height=320, template="plotly_dark",
+                    height=300, template="plotly_dark",
                 )
                 fig5 = style_fig(fig5)
                 st.plotly_chart(fig5, use_container_width=True, config=PLOTLY_CONFIG)
