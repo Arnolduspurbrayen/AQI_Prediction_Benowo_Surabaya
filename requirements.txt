@@ -4,7 +4,7 @@ numpy==2.4.4
 plotly==6.7.0
 pytorch-forecasting==1.7.0
 pytorch-lightning==2.6.1
-torch==2.10.0+cu128
-torchaudio==2.10.0+cu128
+torch==2.10.0
+torchaudio==2.10.0
 torchmetrics==1.9.0
-torchvision==0.25.0+cu128
+torchvision==0.25.0
