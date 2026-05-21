@@ -690,7 +690,7 @@ n_test_eff = int(len(df_b) * 0.15)
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
 
-tab1, tab2, tab3 = st.tabs(["📊 Prediksi", "✏️ Manual", "📈 Evaluasi"])
+tab1, tab3 = st.tabs(["📊 Prediksi", "📈 Evaluasi"])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 1
@@ -787,83 +787,6 @@ with tab1:
         st.download_button("⬇️ Download CSV", csv_dl,
                            f"prediksi_{TARGET}_{pred_dt_start.strftime('%Y%m%d_%H%M')}.csv",
                            "text/csv")
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 2
-# ─────────────────────────────────────────────────────────────────────────────
-with tab2:
-    st.markdown(f'<span class="section-label">Input Manual · {selected_model}</span>', unsafe_allow_html=True)
-    st.caption("Masukkan nilai sensor terkini. Jam terakhir akan diganti dengan nilai ini.")
-
-    col_a, col_b, col_c = st.columns(3)
-    manual_aqi  = col_a.number_input(f"{selected_model} saat ini", 0.0, 500.0, 100.0, 1.0)
-    manual_pm25 = col_b.number_input("PM2.5 saat ini",             0.0, 500.0,  50.0, 1.0)
-    manual_pm10 = col_c.number_input("PM10 saat ini",              0.0, 500.0,  80.0, 1.0)
-
-    if st.button("🚀 Jalankan Prediksi Manual", type="primary"):
-        with st.spinner("Menjalankan prediksi…"):
-            try:
-                df_ctx = df_b.tail(MAX_ENCODER_LENGTH + MAX_PREDICTION_LENGTH).copy()
-                last   = df_ctx.index[-1]
-                df_ctx.loc[last, TARGET] = manual_aqi
-                df_ctx.loc[last, "pm25"] = manual_pm25
-                df_ctx.loc[last, "pm10"] = manual_pm10
-                for col, lags in [(TARGET, [1, 24, 168]), ("pm25", [1, 24]), ("pm10", [1, 24])]:
-                    for lag in lags:
-                        df_ctx[f"{col}_lag{lag}"] = df_ctx[col].shift(lag).bfill()
-
-                pred_q2, _ = run_prediction(model, training_dataset, df_ctx)
-                q10b, q50b, q90b = pred_q2[:, 0], pred_q2[:, 1], pred_q2[:, 2]
-
-                start_dt2 = df_b["datetime_final"].iloc[-1] + timedelta(hours=1)
-                dt_idx2   = [start_dt2 + timedelta(hours=i) for i in range(MAX_PREDICTION_LENGTH)]
-
-                ca, cb, cc = st.columns(3)
-                ca.metric(f"{selected_model} Prediksi H+1",  f"{q50b[0]:.1f}")
-                cb.metric(f"{selected_model} Prediksi H+12", f"{q50b[11]:.1f}")
-                cc.metric(f"{selected_model} Prediksi H+24", f"{q50b[-1]:.1f}")
-
-                cat2, _ = aqi_category(q50b[0], TARGET)
-                st.caption(f"Kategori jam +1: {cat2}")
-
-                fig2 = go.Figure()
-                fig2.add_trace(go.Scatter(
-                    x=dt_idx2 + dt_idx2[::-1],
-                    y=list(q90b) + list(q10b[::-1]),
-                    fill="toself", fillcolor=FILL_COLOR,
-                    line=dict(color="rgba(255,255,255,0)"),
-                    name="Interval Q10–Q90", hoverinfo="skip",
-                ))
-                fig2.add_trace(go.Scatter(
-                    x=dt_idx2, y=q50b,
-                    mode="lines+markers", line=dict(color=LINE_COLOR, width=2),
-                    marker=dict(size=5), name="Prediksi (Q50)",
-                ))
-                fig2 = add_aqi_hlines(fig2)
-                fig2.update_layout(
-                    title="Prediksi 24 Jam (Input Manual)",
-                    xaxis_title="Waktu", yaxis_title=selected_model,
-                    height=360, template="plotly_dark", hovermode="x unified",
-                )
-                fig2 = style_fig(fig2)
-                st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
-
-                with st.expander("📋 Lihat semua nilai prediksi"):
-                    df_manual_res = pd.DataFrame({
-                        "Waktu"         : [t.strftime("%Y-%m-%d %H:%M") for t in dt_idx2],
-                        "Q10"           : np.round(q10b, 2),
-                        "Q50 (Prediksi)": np.round(q50b, 2),
-                        "Q90"           : np.round(q90b, 2),
-                        "Kategori"      : [aqi_category(v, TARGET)[0] for v in q50b],
-                    })
-                    st.dataframe(df_manual_res, use_container_width=True, hide_index=True)
-                    csv_m = df_manual_res.to_csv(index=False).encode("utf-8")
-                    st.download_button("⬇️ Download CSV", csv_m,
-                                       f"prediksi_manual_{TARGET}.csv", "text/csv")
-
-            except Exception as e:
-                st.error(f"❌ Prediksi gagal: {e}")
-                st.exception(e)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 3
