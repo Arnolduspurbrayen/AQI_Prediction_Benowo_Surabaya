@@ -27,7 +27,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import warnings
 warnings.filterwarnings("ignore")
 
-import inspect
 import unittest.mock as mock
 from pathlib import Path
 from datetime import timedelta, datetime
@@ -570,30 +569,19 @@ def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
         hp   = ckpt["hyper_parameters"]
         sd   = ckpt["state_dict"]
 
-        # Filter unknown hyperparameters agar kompatibel dengan versi pytorch-forecasting baru
-        valid_keys = set(inspect.signature(TemporalFusionTransformer.__init__).parameters.keys())
-        valid_keys.discard("self")
-        hp_clean = {k: v for k, v in hp.items() if k in valid_keys}
-
-        model = TemporalFusionTransformer(**hp_clean)
+        model = TemporalFusionTransformer(**hp)
         model.load_state_dict(sd, strict=False)
         model.eval()
 
         n_test         = int(len(df) * 0.15)
         dataset_params = ckpt.get("dataset_parameters", None)
 
-        # Coba load dataset dari checkpoint, fallback ke manual jika gagal
-        training_dataset = None
         if dataset_params is not None:
-            try:
-                training_dataset = TimeSeriesDataSet.from_parameters(
-                    dataset_params, df,
-                    predict=False, stop_randomization=True,
-                )
-            except Exception:
-                training_dataset = None
-
-        if training_dataset is None:
+            training_dataset = TimeSeriesDataSet.from_parameters(
+                dataset_params, df,
+                predict=False, stop_randomization=True,
+            )
+        else:
             df_train = df.iloc[:-n_test].copy() if n_test > 0 else df.copy()
             training_dataset = TimeSeriesDataSet(
                 df_train,
