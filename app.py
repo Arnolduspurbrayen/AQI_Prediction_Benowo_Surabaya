@@ -778,7 +778,7 @@ st.markdown("""
   <div class="info-card">
     <div class="info-card-label">Standar AQI</div>
     <div class="info-card-val"><b style="color:#cbd5e1">AQI US</b> &mdash; EPA Amerika
-      <small><b style="color:#cbd5e1">AQI CN</b> &mdash; China GB3095</small>
+    <div class="info-card-val"><b style="color:#cbd5e1">AQI CN</b> &mdash; China GB3095
     </div>
   </div>
   <div class="info-card">
