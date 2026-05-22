@@ -750,7 +750,7 @@ selected_model = st.radio(
     list(MODEL_CONFIGS.keys()),
     index=0,
     horizontal=True,
-    help="AQI US = standar EPA Amerika (skala 0-500). AQI CN = standar China GB3095 (skala 0-500). Pilih sesuai referensi yang ingin digunakan.",
+    help="AQI US = standar EPA Amerika (skala 0-500). AQI CN = standar China GB3095 (skala 0-500).",
     label_visibility="collapsed",
 )
 
@@ -783,7 +783,7 @@ n_test_eff = int(len(df_b) * 0.15)
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
 
-tab1, tab3 = st.tabs(["📊 Prediksi", "📈 Evaluasi"])
+tab1, = st.tabs(["📊 Prediksi"])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 1
@@ -792,10 +792,10 @@ with tab1:
     st.markdown(f'<span class="section-label">Prediksi {selected_model} · Data Test</span>', unsafe_allow_html=True)
     st.markdown("""
 <div class="guide-box">
-  <div class="guide-title">Cara Pakai Tab Prediksi</div>
+  <div class="guide-title">Cara Pakai</div>
   <div class="guide-step"><span class="snum">1</span>Geser <b>slider</b> untuk memilih titik awal prediksi di dalam periode data test.</div>
   <div class="guide-step"><span class="snum">2</span>Model otomatis memprediksi <b>24 jam ke depan</b> dari titik tersebut.</div>
-  <div class="guide-step"><span class="snum">3</span>Grafik: <span style="color:#636EFA">&#9644; biru</span> = prediksi Q50, <span style="color:#f85149">- - merah</span> = aktual, area abu = ketidakpastian Q10&ndash;Q90.</div>
+  <div class="guide-step"><span class="snum">3</span>Grafik: <span style="color:#636EFA">&#9644; biru</span> = prediksi Q50, <span style="color:#f85149">- - merah</span> = aktual, area abu = rentang ketidakpastian Q10&ndash;Q90.</div>
   <div class="guide-step"><span class="snum">4</span>Kartu metrik menampilkan nilai jam pertama (H+1) dan error rata-rata 24 jam (MAE &amp; RMSE).</div>
 </div>
 """, unsafe_allow_html=True)
@@ -843,11 +843,11 @@ with tab1:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}",    help=cat_pred)
     c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}", help=cat_act)
-    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Mean Absolute Error — rata-rata selisih absolut prediksi vs aktual")
+    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Mean Absolute Error — rata-rata selisih absolut prediksi vs aktual selama 24 jam")
     c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Root Mean Squared Error — error besar diberi penalti lebih tinggi")
     st.markdown(
-        f'<div class="mhint">&#128161; <b>H+1</b> = jam pertama dari window prediksi. '
-        f'Hover kartu untuk kategori AQI. MAE &amp; RMSE dihitung atas seluruh 24 jam.</div>',
+        '<div class="mhint">&#128161; <b>H+1</b> = jam pertama dari window prediksi. '
+        'Hover kartu untuk kategori AQI. MAE &amp; RMSE dihitung atas seluruh 24 jam.</div>',
         unsafe_allow_html=True
     )
 
@@ -894,141 +894,6 @@ with tab1:
         st.download_button("⬇️ Download CSV", csv_dl,
                            f"prediksi_{TARGET}_{pred_dt_start.strftime('%Y%m%d_%H%M')}.csv",
                            "text/csv")
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 3
-# ─────────────────────────────────────────────────────────────────────────────
-with tab3:
-    st.markdown(f'<span class="section-label">Evaluasi · {selected_model}</span>', unsafe_allow_html=True)
-    st.markdown("""
-<div class="guide-box">
-  <div class="guide-title">Cara Pakai Tab Evaluasi</div>
-  <div class="guide-step"><span class="snum">1</span>Pilih <b>interval sampling</b> — seberapa sering model dijalankan. Misal: 24 = setiap hari, 168 = setiap minggu.</div>
-  <div class="guide-step"><span class="snum">2</span>Klik <b>Jalankan Evaluasi</b>. Proses membutuhkan beberapa menit (makin kecil interval, makin lama).</div>
-  <div class="guide-step"><span class="snum">3</span>Hasil: metrik akurasi global (MAE, RMSE, MAPE, Korelasi) + grafik prediksi vs aktual seluruh periode test.</div>
-  <div class="guide-step"><span class="snum">4</span><b>MAE per Horizon</b> menunjukkan akurasi tiap jam ke depan — wajar bila error naik semakin jauh horizonnya.</div>
-</div>
-""", unsafe_allow_html=True)
-    st.caption("Interval lebih kecil = lebih banyak window = evaluasi lebih menyeluruh, namun butuh waktu lebih lama.")
-
-    sample_step = st.selectbox(
-        "Interval sampling (jam)",
-        [24, 48, 72, 168], index=1,
-        help="24 = setiap hari, 48 = setiap 2 hari, 168 = setiap 7 hari",
-    )
-
-    if st.button("▶️ Jalankan Evaluasi", type="primary"):
-        test_start_row = len(df_b) - n_test_eff
-        windows = list(range(0, n_test_eff - MAX_PREDICTION_LENGTH, sample_step))
-
-        prog   = st.progress(0)
-        status = st.empty()
-        all_q50, all_actual, all_dt = [], [], []
-
-        for i, off in enumerate(windows):
-            prog.progress((i + 1) / max(len(windows), 1))
-            status.text(f"Memproses window {i+1}/{len(windows)}…")
-
-            ps  = test_start_row + off
-            ws  = max(0, ps - MAX_ENCODER_LENGTH)
-            we  = min(len(df_b), ps + MAX_PREDICTION_LENGTH)
-            dfw = df_b.iloc[ws:we].copy()
-
-            try:
-                pq, act = run_prediction(model, training_dataset, dfw)
-                dt0     = df_b["datetime_final"].iloc[ps]
-                all_q50.append(pq[:, 1])
-                all_actual.append(act)
-                all_dt.extend([dt0 + timedelta(hours=h) for h in range(MAX_PREDICTION_LENGTH)])
-            except Exception:
-                continue
-
-        prog.empty()
-        status.empty()
-
-        if not all_q50:
-            st.error("Tidak ada prediksi yang berhasil.")
-        else:
-            q50_all = np.concatenate(all_q50)
-            dt_all  = all_dt
-
-            act_all  = np.concatenate(all_actual)
-            mae_all  = float(np.mean(np.abs(q50_all - act_all)))
-            rmse_all = float(np.sqrt(np.mean((q50_all - act_all) ** 2)))
-            mape_all = float(np.mean(
-                np.abs((q50_all - act_all) / np.clip(act_all, 1, None))) * 100)
-            corr     = float(np.corrcoef(q50_all, act_all)[0, 1])
-
-            st.success(f"✅ {len(windows)} window · {len(q50_all)} jam total")
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("MAE",          f"{mae_all:.2f}")
-            m2.metric("RMSE",         f"{rmse_all:.2f}")
-            m3.metric("MAPE",         f"{mape_all:.1f}%")
-            m4.metric("Korelasi (r)", f"{corr:.3f}")
-
-            fig3 = go.Figure()
-            fig3.add_trace(go.Scatter(
-                x=dt_all, y=q50_all,
-                mode="lines", line=dict(color=LINE_COLOR, width=1.5),
-                name="Prediksi (Q50)", opacity=0.85,
-            ))
-            fig3.add_trace(go.Scatter(
-                x=dt_all, y=act_all,
-                mode="lines", line=dict(color="#f85149", width=1.5, dash="dash"),
-                name="Aktual", opacity=0.85,
-            ))
-            fig3 = add_aqi_hlines(fig3)
-            fig3.update_layout(
-                title="Prediksi vs Aktual",
-                xaxis_title="Waktu", yaxis_title=selected_model,
-                height=360, template="plotly_dark", hovermode="x unified",
-                    )
-            fig3 = style_fig(fig3)
-            st.plotly_chart(fig3, use_container_width=True, config=PLOTLY_CONFIG)
-
-            fig4 = go.Figure()
-            fig4.add_trace(go.Scatter(
-                x=act_all, y=q50_all, mode="markers",
-                marker=dict(color=q50_all, colorscale="Viridis",
-                            size=4, opacity=0.5, showscale=True,
-                            colorbar=dict(title=selected_model)),
-                name="Prediksi vs Aktual",
-            ))
-            vmin = float(min(act_all.min(), q50_all.min()))
-            vmax = float(max(act_all.max(), q50_all.max()))
-            fig4.add_trace(go.Scatter(
-                x=[vmin, vmax], y=[vmin, vmax],
-                mode="lines", line=dict(color="rgba(255,255,255,0.3)", dash="dash", width=1),
-                name="Ideal (y=x)",
-            ))
-            fig4.update_layout(
-                title="Scatter · Aktual vs Prediksi",
-                xaxis_title=f"Aktual {selected_model}",
-                yaxis_title=f"Prediksi {selected_model} (Q50)",
-                height=360, template="plotly_dark",
-            )
-            fig4 = style_fig(fig4)
-            st.plotly_chart(fig4, use_container_width=True, config=PLOTLY_CONFIG)
-
-            if len(all_q50) > 1:
-                errs  = np.array([np.abs(pq - act)
-                                  for pq, act in zip(all_q50, all_actual)])
-                mae_h = errs.mean(axis=0)
-                fig5  = go.Figure()
-                fig5.add_trace(go.Bar(
-                    x=list(range(1, MAX_PREDICTION_LENGTH + 1)),
-                    y=mae_h,
-                    marker_color="rgba(88,166,255,0.7)",
-                    name="MAE per Horizon",
-                ))
-                fig5.update_layout(
-                    title="MAE per Horizon",
-                    xaxis_title="Horizon (jam)", yaxis_title="MAE",
-                    height=300, template="plotly_dark",
-                )
-                fig5 = style_fig(fig5)
-                st.plotly_chart(fig5, use_container_width=True, config=PLOTLY_CONFIG)
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("---")
