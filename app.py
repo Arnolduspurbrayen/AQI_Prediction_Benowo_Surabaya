@@ -389,60 +389,109 @@ code {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    margin: 0.8rem 0 0.6rem;
+    margin: 0.9rem 0 0.5rem;
 }
 @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
 .info-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.7rem 0.85rem;
+    padding: 0.75rem 0.9rem;
 }
-.info-card-icon { font-size: 1rem; margin-bottom: 0.1rem; }
-.info-card-title {
-    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.15rem;
+.info-card-label {
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #475569;
+    margin-bottom: 0.25rem;
 }
-.info-card-val { font-size: 0.81rem; font-weight: 500; color: var(--text); line-height: 1.45; }
-.info-card-val small { font-size: 0.71rem; color: var(--muted); }
+.info-card-val {
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+.info-card-val small {
+    display: block;
+    font-size: 0.72rem;
+    color: #475569;
+    margin-top: 0.1rem;
+}
 
-/* ── AQI LEGEND CHIPS ── */
-.aqi-legend { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.35rem 0 0.75rem; }
-.aqi-chip {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    border-radius: 20px; padding: 0.18rem 0.55rem;
-    font-size: 0.68rem; font-weight: 600; font-family: var(--mono);
-    border: 1px solid rgba(255,255,255,0.08); background: var(--card); color: var(--text);
+/* ── AQI LEGEND ── */
+.aqi-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0.4rem 0 0.8rem;
 }
-.aqi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.aqi-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #111620;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 0.22rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #94a3b8;
+    font-family: var(--mono);
+}
+.aqi-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
 /* ── GUIDE BOX ── */
 .guide-box {
-    background: rgba(56,189,248,0.04);
-    border: 1px solid rgba(56,189,248,0.18);
+    background: #111620;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-left: 3px solid #38bdf8;
     border-radius: var(--radius);
-    padding: 0.75rem 0.9rem;
-    margin-bottom: 0.85rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
 }
-.guide-title {
-    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.09em; color: var(--accent); margin-bottom: 0.4rem;
+.guide-box p {
+    font-size: 0.8rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.7 !important;
+    margin: 0 !important;
 }
-.guide-step {
-    font-size: 0.79rem; color: #94a3b8; line-height: 1.65;
-    display: flex; align-items: flex-start; gap: 0.45rem; margin-bottom: 0.1rem;
+.guide-box b { color: #cbd5e1 !important; }
+.guide-box ol {
+    margin: 0.4rem 0 0 1.1rem;
+    padding: 0;
 }
-.snum {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 1.3em; height: 1.3em;
-    background: rgba(56,189,248,0.13); color: var(--accent);
-    border-radius: 50%; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1em;
+.guide-box li {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.7;
+    padding-left: 0.2rem;
+}
+.guide-box li b { color: #cbd5e1; }
+
+/* ── SECTION DIVIDER LABEL ── */
+.ctx-label {
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #475569;
+    margin: 0.6rem 0 0.3rem;
+    display: block;
 }
 
 /* ── METRIC HINT ── */
 .mhint {
-    font-size: 0.73rem; color: var(--muted); margin: 0.2rem 0 0.7rem; line-height: 1.5;
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0.25rem 0 0.75rem;
 }
+.mhint b { color: #94a3b8; }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -708,49 +757,56 @@ PLOTLY_CONFIG = {
 
 st.markdown("""
 <div class="hero">
-  <div class="hero-title">AQI Forecast &middot; Benowo <span class="hero-badge">&#9679; TFT</span></div>
-  <div class="hero-sub">Prediksi kualitas udara 24 jam ke depan &middot; Stasiun Benowo, Surabaya &middot; Temporal Fusion Transformer</div>
+  <div class="hero-title">AQI Forecast &middot; Benowo</div>
+  <div class="hero-sub">Prediksi kualitas udara 24 jam ke depan &middot; Stasiun Benowo, Surabaya</div>
 </div>
+
+<span class="ctx-label">Tentang aplikasi ini</span>
 <div class="info-grid">
   <div class="info-card">
-    <div class="info-card-icon">🏭</div>
-    <div class="info-card-title">Stasiun Pemantauan</div>
-    <div class="info-card-val">Benowo, Surabaya<br><small>Data historis per jam (hourly)</small></div>
+    <div class="info-card-label">Stasiun</div>
+    <div class="info-card-val">Benowo, Surabaya
+      <small>Data per jam (hourly)</small>
+    </div>
   </div>
   <div class="info-card">
-    <div class="info-card-icon">🤖</div>
-    <div class="info-card-title">Model AI</div>
-    <div class="info-card-val">Temporal Fusion Transformer<br><small>Prediksi H+1 hingga H+24</small></div>
+    <div class="info-card-label">Model Prediksi</div>
+    <div class="info-card-val">Temporal Fusion Transformer
+      <small>Prediksi H+1 hingga H+24</small>
+    </div>
   </div>
   <div class="info-card">
-    <div class="info-card-icon">🌏</div>
-    <div class="info-card-title">Dua Standar AQI</div>
-    <div class="info-card-val"><b>AQI US</b> — EPA Amerika<br><b>AQI CN</b> — China GB3095</div>
+    <div class="info-card-label">Standar AQI</div>
+    <div class="info-card-val"><b style="color:#cbd5e1">AQI US</b> &mdash; EPA Amerika
+      <small><b style="color:#cbd5e1">AQI CN</b> &mdash; China GB3095</small>
+    </div>
   </div>
   <div class="info-card">
-    <div class="info-card-icon">📐</div>
-    <div class="info-card-title">Data Uji</div>
-    <div class="info-card-val">15% akhir dataset<br><small>Model belum pernah melihat data ini</small></div>
+    <div class="info-card-label">Data yang Digunakan</div>
+    <div class="info-card-val">Data uji (15% akhir)
+      <small>Belum pernah dilihat model</small>
+    </div>
   </div>
 </div>
-<div class="section-label" style="margin-top:0;">Skala Kategori AQI (US &amp; CN)</div>
-<div class="aqi-legend">
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#00e400"></span>0–50 Baik</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#ffff00"></span>51–100 Sedang</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff7e00"></span>101–150 Sensitif</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff0000"></span>151–200 Tdk Sehat</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#8f3f97"></span>201–300 Sgt Tdk Sehat</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#7e0023"></span>&gt;300 Berbahaya</span>
+
+<span class="ctx-label">Kategori AQI</span>
+<div class="aqi-row">
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#00e400"></span>0&ndash;50 &nbsp;Baik</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#d4d400"></span>51&ndash;100 &nbsp;Sedang</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff7e00"></span>101&ndash;150 &nbsp;Sensitif</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff4444"></span>151&ndash;200 &nbsp;Tidak Sehat</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#8f3f97"></span>201&ndash;300 &nbsp;Sangat Tidak Sehat</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#7e0023"></span>&gt;300 &nbsp;Berbahaya</span>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="section-label" style="margin-top:0.5rem;margin-bottom:0.3rem;">Pilih Standar AQI</div>', unsafe_allow_html=True)
+st.markdown('<span class="ctx-label">Pilih standar AQI yang digunakan</span>', unsafe_allow_html=True)
 selected_model = st.radio(
-    "Pilih Standar AQI",
+    "Pilih standar AQI",
     list(MODEL_CONFIGS.keys()),
     index=0,
     horizontal=True,
-    help="AQI US = standar EPA Amerika (skala 0-500). AQI CN = standar China GB3095 (skala 0-500).",
+    help="AQI US menggunakan standar EPA Amerika. AQI CN menggunakan standar China GB3095. Keduanya memakai skala 0–500.",
     label_visibility="collapsed",
 )
 
@@ -783,7 +839,7 @@ n_test_eff = int(len(df_b) * 0.15)
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
 
-tab1, = st.tabs(["📊 Prediksi"])
+tab1, = st.tabs(["Prediksi"])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 1
@@ -792,11 +848,13 @@ with tab1:
     st.markdown(f'<span class="section-label">Prediksi {selected_model} · Data Test</span>', unsafe_allow_html=True)
     st.markdown("""
 <div class="guide-box">
-  <div class="guide-title">Cara Pakai</div>
-  <div class="guide-step"><span class="snum">1</span>Geser <b>slider</b> untuk memilih titik awal prediksi di dalam periode data test.</div>
-  <div class="guide-step"><span class="snum">2</span>Model otomatis memprediksi <b>24 jam ke depan</b> dari titik tersebut.</div>
-  <div class="guide-step"><span class="snum">3</span>Grafik: <span style="color:#636EFA">&#9644; biru</span> = prediksi Q50, <span style="color:#f85149">- - merah</span> = aktual, area abu = rentang ketidakpastian Q10&ndash;Q90.</div>
-  <div class="guide-step"><span class="snum">4</span>Kartu metrik menampilkan nilai jam pertama (H+1) dan error rata-rata 24 jam (MAE &amp; RMSE).</div>
+  <p><b>Cara menggunakan halaman ini</b></p>
+  <ol>
+    <li>Geser <b>slider</b> di bawah untuk memilih titik awal prediksi dalam periode data uji.</li>
+    <li>Model akan memprediksi <b>24 jam ke depan</b> secara otomatis.</li>
+    <li>Grafik menampilkan prediksi (garis biru), nilai aktual (garis merah putus), dan rentang ketidakpastian Q10&ndash;Q90 (area abu).</li>
+    <li>Kartu di atas grafik menunjukkan nilai jam pertama (H+1) serta error keseluruhan 24 jam.</li>
+  </ol>
 </div>
 """, unsafe_allow_html=True)
 
@@ -843,11 +901,12 @@ with tab1:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}",    help=cat_pred)
     c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}", help=cat_act)
-    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Mean Absolute Error — rata-rata selisih absolut prediksi vs aktual selama 24 jam")
-    c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Root Mean Squared Error — error besar diberi penalti lebih tinggi")
+    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Rata-rata selisih absolut antara prediksi dan nilai aktual selama 24 jam")
+    c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Seperti MAE, namun error besar diberi penalti lebih tinggi")
     st.markdown(
-        '<div class="mhint">&#128161; <b>H+1</b> = jam pertama dari window prediksi. '
-        'Hover kartu untuk kategori AQI. MAE &amp; RMSE dihitung atas seluruh 24 jam.</div>',
+        '<div class="mhint"><b>H+1</b> = jam pertama dari window prediksi. '
+        'Hover tiap kartu untuk melihat kategori AQI-nya. '
+        'MAE dan RMSE dihitung dari seluruh 24 jam prediksi.</div>',
         unsafe_allow_html=True
     )
 
@@ -899,8 +958,8 @@ with tab1:
 st.markdown("---")
 st.markdown("""
 <div style="text-align:center;padding:0.5rem 0 1rem;">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#7d8590;">
-    🌬️ AQI Forecast · Stasiun Benowo · TFT (pytorch-forecasting) · EXP3 · dropout=0.25 · lr=3e-05 · hidden=64 · lstm_layers=2
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#334155;">
+    AQI Forecast &middot; Stasiun Benowo &middot; TFT (pytorch-forecasting) &middot; EXP3 &middot; dropout=0.25 &middot; lr=3e-05 &middot; hidden=64 &middot; lstm_layers=2
   </span>
 </div>
 """, unsafe_allow_html=True)
