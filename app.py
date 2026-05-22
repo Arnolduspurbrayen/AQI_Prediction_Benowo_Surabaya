@@ -383,6 +383,67 @@ code {
     padding: 0.1em 0.35em !important;
 }
 
+
+/* ── INFO CARDS ── */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0.8rem 0 0.6rem;
+}
+@media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+.info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.85rem;
+}
+.info-card-icon { font-size: 1rem; margin-bottom: 0.1rem; }
+.info-card-title {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.15rem;
+}
+.info-card-val { font-size: 0.81rem; font-weight: 500; color: var(--text); line-height: 1.45; }
+.info-card-val small { font-size: 0.71rem; color: var(--muted); }
+
+/* ── AQI LEGEND CHIPS ── */
+.aqi-legend { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.35rem 0 0.75rem; }
+.aqi-chip {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    border-radius: 20px; padding: 0.18rem 0.55rem;
+    font-size: 0.68rem; font-weight: 600; font-family: var(--mono);
+    border: 1px solid rgba(255,255,255,0.08); background: var(--card); color: var(--text);
+}
+.aqi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── GUIDE BOX ── */
+.guide-box {
+    background: rgba(56,189,248,0.04);
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: var(--radius);
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.85rem;
+}
+.guide-title {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--accent); margin-bottom: 0.4rem;
+}
+.guide-step {
+    font-size: 0.79rem; color: #94a3b8; line-height: 1.65;
+    display: flex; align-items: flex-start; gap: 0.45rem; margin-bottom: 0.1rem;
+}
+.snum {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 1.3em; height: 1.3em;
+    background: rgba(56,189,248,0.13); color: var(--accent);
+    border-radius: 50%; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1em;
+}
+
+/* ── METRIC HINT ── */
+.mhint {
+    font-size: 0.73rem; color: var(--muted); margin: 0.2rem 0 0.7rem; line-height: 1.5;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -647,17 +708,49 @@ PLOTLY_CONFIG = {
 
 st.markdown("""
 <div class="hero">
-  <div class="hero-title">AQI Forecast &middot; Benowo <span class="hero-badge">&#9679; LIVE</span></div>
-  <div class="hero-sub">Prediksi kualitas udara 24 jam ke depan &middot; Temporal Fusion Transformer</div>
+  <div class="hero-title">AQI Forecast &middot; Benowo <span class="hero-badge">&#9679; TFT</span></div>
+  <div class="hero-sub">Prediksi kualitas udara 24 jam ke depan &middot; Stasiun Benowo, Surabaya &middot; Temporal Fusion Transformer</div>
+</div>
+<div class="info-grid">
+  <div class="info-card">
+    <div class="info-card-icon">🏭</div>
+    <div class="info-card-title">Stasiun Pemantauan</div>
+    <div class="info-card-val">Benowo, Surabaya<br><small>Data historis per jam (hourly)</small></div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-icon">🤖</div>
+    <div class="info-card-title">Model AI</div>
+    <div class="info-card-val">Temporal Fusion Transformer<br><small>Prediksi H+1 hingga H+24</small></div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-icon">🌏</div>
+    <div class="info-card-title">Dua Standar AQI</div>
+    <div class="info-card-val"><b>AQI US</b> — EPA Amerika<br><b>AQI CN</b> — China GB3095</div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-icon">📐</div>
+    <div class="info-card-title">Data Uji</div>
+    <div class="info-card-val">15% akhir dataset<br><small>Model belum pernah melihat data ini</small></div>
+  </div>
+</div>
+<div class="section-label" style="margin-top:0;">Skala Kategori AQI (US &amp; CN)</div>
+<div class="aqi-legend">
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#00e400"></span>0–50 Baik</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#ffff00"></span>51–100 Sedang</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff7e00"></span>101–150 Sensitif</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff0000"></span>151–200 Tdk Sehat</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#8f3f97"></span>201–300 Sgt Tdk Sehat</span>
+  <span class="aqi-chip"><span class="aqi-dot" style="background:#7e0023"></span>&gt;300 Berbahaya</span>
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown('<div class="section-label" style="margin-top:0.5rem;margin-bottom:0.3rem;">Pilih Standar AQI</div>', unsafe_allow_html=True)
 selected_model = st.radio(
-    "Model",
+    "Pilih Standar AQI",
     list(MODEL_CONFIGS.keys()),
     index=0,
     horizontal=True,
-    help="AQI US = standar EPA Amerika. AQI CN = standar China (GB3095).",
+    help="AQI US = standar EPA Amerika (skala 0-500). AQI CN = standar China GB3095 (skala 0-500). Pilih sesuai referensi yang ingin digunakan.",
     label_visibility="collapsed",
 )
 
@@ -697,6 +790,15 @@ tab1, tab3 = st.tabs(["📊 Prediksi", "📈 Evaluasi"])
 # ─────────────────────────────────────────────────────────────────────────────
 with tab1:
     st.markdown(f'<span class="section-label">Prediksi {selected_model} · Data Test</span>', unsafe_allow_html=True)
+    st.markdown("""
+<div class="guide-box">
+  <div class="guide-title">Cara Pakai Tab Prediksi</div>
+  <div class="guide-step"><span class="snum">1</span>Geser <b>slider</b> untuk memilih titik awal prediksi di dalam periode data test.</div>
+  <div class="guide-step"><span class="snum">2</span>Model otomatis memprediksi <b>24 jam ke depan</b> dari titik tersebut.</div>
+  <div class="guide-step"><span class="snum">3</span>Grafik: <span style="color:#636EFA">&#9644; biru</span> = prediksi Q50, <span style="color:#f85149">- - merah</span> = aktual, area abu = ketidakpastian Q10&ndash;Q90.</div>
+  <div class="guide-step"><span class="snum">4</span>Kartu metrik menampilkan nilai jam pertama (H+1) dan error rata-rata 24 jam (MAE &amp; RMSE).</div>
+</div>
+""", unsafe_allow_html=True)
 
     test_start_row = len(df_b) - n_test_eff
     max_offset     = max(0, n_test_eff - MAX_PREDICTION_LENGTH - 1)
@@ -741,8 +843,13 @@ with tab1:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}",    help=cat_pred)
     c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}", help=cat_act)
-    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}")
-    c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}")
+    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Mean Absolute Error — rata-rata selisih absolut prediksi vs aktual")
+    c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Root Mean Squared Error — error besar diberi penalti lebih tinggi")
+    st.markdown(
+        f'<div class="mhint">&#128161; <b>H+1</b> = jam pertama dari window prediksi. '
+        f'Hover kartu untuk kategori AQI. MAE &amp; RMSE dihitung atas seluruh 24 jam.</div>',
+        unsafe_allow_html=True
+    )
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -793,7 +900,16 @@ with tab1:
 # ─────────────────────────────────────────────────────────────────────────────
 with tab3:
     st.markdown(f'<span class="section-label">Evaluasi · {selected_model}</span>', unsafe_allow_html=True)
-    st.caption("Sampling prediksi per-N jam. Proses butuh beberapa menit.")
+    st.markdown("""
+<div class="guide-box">
+  <div class="guide-title">Cara Pakai Tab Evaluasi</div>
+  <div class="guide-step"><span class="snum">1</span>Pilih <b>interval sampling</b> — seberapa sering model dijalankan. Misal: 24 = setiap hari, 168 = setiap minggu.</div>
+  <div class="guide-step"><span class="snum">2</span>Klik <b>Jalankan Evaluasi</b>. Proses membutuhkan beberapa menit (makin kecil interval, makin lama).</div>
+  <div class="guide-step"><span class="snum">3</span>Hasil: metrik akurasi global (MAE, RMSE, MAPE, Korelasi) + grafik prediksi vs aktual seluruh periode test.</div>
+  <div class="guide-step"><span class="snum">4</span><b>MAE per Horizon</b> menunjukkan akurasi tiap jam ke depan — wajar bila error naik semakin jauh horizonnya.</div>
+</div>
+""", unsafe_allow_html=True)
+    st.caption("Interval lebih kecil = lebih banyak window = evaluasi lebih menyeluruh, namun butuh waktu lebih lama.")
 
     sample_step = st.selectbox(
         "Interval sampling (jam)",
