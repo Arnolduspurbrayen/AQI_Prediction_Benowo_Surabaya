@@ -211,6 +211,18 @@ hr {
 }
 [data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
 
+/* ── AQI CATEGORY BADGE (Rule 8 fix: visible on mobile) ── */
+.aqi-badge-inline {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-family: var(--mono);
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    margin-top: 0.3rem;
+    letter-spacing: 0.04em;
+}
+
 /* ── COLUMNS gap ── */
 [data-testid="stHorizontalBlock"] { gap: 0.6rem !important; }
 
@@ -319,6 +331,23 @@ button[kind="secondary"], button:not([kind]) {
     border-radius: 10px !important;
     font-size: 0.8rem !important;
     width: 100% !important;
+}
+
+/* ── PRESET BUTTONS (Rule 2 fix) ── */
+.preset-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+.preset-label {
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #475569;
+    margin-bottom: 0.35rem;
+    display: block;
 }
 
 /* ── EXPANDER ── */
@@ -493,6 +522,27 @@ code {
 }
 .mhint b { color: #94a3b8; }
 
+/* ── ERROR BOX (Rule 5 fix: user-friendly) ── */
+.error-box {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.25);
+    border-left: 3px solid #f85149;
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    margin: 0.5rem 0;
+}
+.error-box-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f87171;
+    margin-bottom: 0.3rem;
+}
+.error-box-msg {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -522,7 +572,6 @@ code {
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HELPERS
-
 # ══════════════════════════════════════════════════════════════════════════════
 
 def aqi_us_category(val):
@@ -538,7 +587,6 @@ def aqi_us_category(val):
 
 
 def aqi_cn_category(val):
-    """Kategori AQI berdasarkan standar China (GB3095-2012)."""
     if val is None or np.isnan(float(val)):
         return "N/A", "#888888"
     val = float(val)
@@ -556,6 +604,18 @@ def aqi_category(val, target="aqi_us"):
     return aqi_us_category(val)
 
 
+# ── Rule 8 fix: render badge HTML visible on mobile ──────────────────────────
+def aqi_badge_html(val, target):
+    label, color = aqi_category(val, target)
+    # pick readable text color
+    text_color = "#000" if color in ("#00e400", "#ffff00", "#ff7e00") else "#fff"
+    return (
+        f'<span class="aqi-badge-inline" '
+        f'style="background:{color}22;color:{color};border:1px solid {color}55;">'
+        f'{label}</span>'
+    )
+
+
 def get_unknown_reals(target: str):
     return [target, "pm25", "pm10",
             f"{target}_lag1", f"{target}_lag24", f"{target}_lag168",
@@ -564,7 +624,6 @@ def get_unknown_reals(target: str):
 
 
 def add_features(df: pd.DataFrame, target: str) -> pd.DataFrame:
-    """Tambahkan semua fitur engineered yang sama dengan saat training."""
     df = df.copy()
     df["month_cat"]      = df["month"].astype(str)
     df["hour_cat"]       = df["hour"].astype(str)
@@ -580,6 +639,24 @@ def add_features(df: pd.DataFrame, target: str) -> pd.DataFrame:
         for lag in lags:
             df[f"{col}_lag{lag}"] = df[col].shift(lag).bfill()
     return df
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ERROR HELPERS — Rule 5: user-friendly messages
+# ══════════════════════════════════════════════════════════════════════════════
+
+def show_friendly_error(title: str, message: str, detail: str = None):
+    """Tampilkan error yang ramah user tanpa stack trace teknis."""
+    html = f"""
+    <div class="error-box">
+      <div class="error-box-title">⚠️ {title}</div>
+      <div class="error-box-msg">{message}</div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+    if detail:
+        with st.expander("Detail teknis (untuk developer)"):
+            st.code(detail, language="text")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -699,7 +776,6 @@ def add_aqi_hlines(fig):
 
 
 def style_fig(fig, mobile_height=300):
-    """Dark elegant chart styling with mobile config."""
     BG   = "#161b22"
     GRID = "rgba(255,255,255,0.05)"
     TICK = "#7d8590"
@@ -733,15 +809,11 @@ def style_fig(fig, mobile_height=300):
             bgcolor="#1c2333", bordercolor="rgba(255,255,255,0.1)",
             font=dict(family="JetBrains Mono, monospace", size=11, color="#e6edf3"),
         ),
-    )
-    # Config untuk mobile: allow pan & zoom tanpa block scroll
-    fig.update_layout(
         dragmode="zoom",
     )
     return fig
 
 
-# Config untuk semua chart: scroll mobile tidak terganggu
 PLOTLY_CONFIG = {
     "scrollZoom": False,
     "displayModeBar": True,
@@ -817,12 +889,25 @@ TEST_CSV   = cfg["csv_path"]
 LINE_COLOR = cfg["color"]
 FILL_COLOR = cfg["color2"]
 
+# ── Rule 5: Friendly file-not-found error ────────────────────────────────────
 if not CKPT_PATH.exists():
-    st.error(f"Checkpoint tidak ditemukan: {CKPT_PATH}")
+    show_friendly_error(
+        "File Model Tidak Ditemukan",
+        f"Model <code>{selected_model}</code> belum tersedia di folder <code>models/</code>. "
+        "Pastikan file checkpoint sudah ditempatkan dengan benar sesuai struktur folder.",
+        detail=str(CKPT_PATH),
+    )
     st.stop()
+
 if not TEST_CSV.exists():
-    st.error(f"Data tidak ditemukan: {TEST_CSV}")
+    show_friendly_error(
+        "File Data Tidak Ditemukan",
+        f"File data uji untuk <code>{selected_model}</code> tidak ditemukan. "
+        "Pastikan file CSV sudah ada di folder <code>data/</code>.",
+        detail=str(TEST_CSV),
+    )
     st.stop()
+
 df_b = load_test_data(str(TEST_CSV), TARGET)
 
 with st.spinner(f"Memuat model {selected_model}..."):
@@ -830,7 +915,12 @@ with st.spinner(f"Memuat model {selected_model}..."):
         model, training_dataset, n_test = load_model_and_dataset(
             str(CKPT_PATH), df_b, TARGET)
     except Exception as e:
-        st.error(f"Gagal memuat model: {e}")
+        show_friendly_error(
+            "Gagal Memuat Model",
+            "Terjadi masalah saat memuat model prediksi. "
+            "Coba refresh halaman. Jika masalah berlanjut, periksa versi library di <code>requirements.txt</code>.",
+            detail=str(e),
+        )
         st.stop()
 
 n_test_eff = int(len(df_b) * 0.15)
@@ -850,10 +940,11 @@ with tab1:
 <div class="guide-box">
   <p><b>Cara menggunakan halaman ini</b></p>
   <ol>
-    <li>Geser <b>slider</b> di bawah untuk memilih titik awal prediksi dalam periode data uji.</li>
+    <li>Pilih titik awal prediksi menggunakan <b>tombol preset</b> (Awal / Tengah / Akhir) atau geser <b>slider</b> secara manual.</li>
+    <li>Klik <b>Reset</b> kapan saja untuk kembali ke posisi awal.</li>
     <li>Model akan memprediksi <b>24 jam ke depan</b> secara otomatis.</li>
     <li>Grafik menampilkan prediksi (garis biru), nilai aktual (garis merah putus), dan rentang ketidakpastian Q10&ndash;Q90 (area abu).</li>
-    <li>Kartu di atas grafik menunjukkan nilai jam pertama (H+1) serta error keseluruhan 24 jam.</li>
+    <li>Kartu di atas grafik menunjukkan nilai & kategori AQI jam pertama (H+1) serta error keseluruhan 24 jam.</li>
   </ol>
 </div>
 """, unsafe_allow_html=True)
@@ -862,13 +953,42 @@ with tab1:
     max_offset     = max(0, n_test_eff - MAX_PREDICTION_LENGTH - 1)
 
     if max_offset <= 0:
-        st.warning("Data test terlalu sedikit untuk prediksi. Tambah jumlah data.")
+        show_friendly_error(
+            "Data Tidak Cukup",
+            "Jumlah data uji terlalu sedikit untuk menjalankan prediksi 24 jam. "
+            "Pastikan dataset memiliki minimal 192 baris data per stasiun.",
+        )
         st.stop()
+
+    # ── Rule 2: Preset shortcuts + Rule 6: Reset button ──────────────────────
+    st.markdown('<span class="preset-label">Pilih cepat titik prediksi</span>', unsafe_allow_html=True)
+
+    # Inisialisasi session state untuk slider
+    if "slider_offset" not in st.session_state:
+        st.session_state["slider_offset"] = 0
+
+    col_awal, col_tengah, col_akhir, col_reset = st.columns([1, 1, 1, 1])
+    with col_awal:
+        if st.button("⏮ Awal", use_container_width=True, help="Lompat ke awal periode data uji"):
+            st.session_state["slider_offset"] = 0
+    with col_tengah:
+        if st.button("⏭ Tengah", use_container_width=True, help="Lompat ke pertengahan periode data uji"):
+            st.session_state["slider_offset"] = (max_offset // 2 // MAX_PREDICTION_LENGTH) * MAX_PREDICTION_LENGTH
+    with col_akhir:
+        if st.button("⏩ Akhir", use_container_width=True, help="Lompat ke akhir periode data uji"):
+            st.session_state["slider_offset"] = (max_offset // MAX_PREDICTION_LENGTH) * MAX_PREDICTION_LENGTH
+    with col_reset:
+        if st.button("↺ Reset", use_container_width=True, help="Kembalikan ke posisi awal (jam ke-0)"):
+            st.session_state["slider_offset"] = 0
 
     offset = st.slider(
         "Geser titik awal prediksi (jam ke-N dalam periode test)",
-        min_value=0, max_value=max_offset, value=0, step=MAX_PREDICTION_LENGTH,
-        help="0 = awal data test",
+        min_value=0,
+        max_value=max_offset,
+        value=st.session_state["slider_offset"],
+        step=MAX_PREDICTION_LENGTH,
+        key="slider_offset",
+        help="0 = awal data test. Gunakan tombol preset di atas untuk lompat cepat.",
     )
 
     pred_start_row = test_start_row + offset
@@ -886,8 +1006,12 @@ with tab1:
         try:
             pred_q, actual = run_prediction(model, training_dataset, df_window)
         except Exception as e:
-            st.error(f"❌ Prediksi gagal: {e}")
-            st.exception(e)
+            show_friendly_error(
+                "Prediksi Gagal",
+                "Model tidak dapat menjalankan prediksi untuk periode ini. "
+                "Coba geser slider ke posisi lain, atau gunakan tombol <b>Reset</b> untuk kembali ke awal.",
+                detail=str(e),
+            )
             st.stop()
 
     q10, q50, q90 = pred_q[:, 0], pred_q[:, 1], pred_q[:, 2]
@@ -898,14 +1022,35 @@ with tab1:
     cat_pred, _  = aqi_category(q50[0], TARGET)
     cat_act,  _  = aqi_category(actual[0], TARGET)
 
+    # ── Rule 8: Tampilkan kategori langsung di bawah nilai, visible di mobile ──
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}",    help=cat_pred)
-    c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}", help=cat_act)
+    c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}")
+    c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}")
     c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Rata-rata selisih absolut antara prediksi dan nilai aktual selama 24 jam")
     c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Seperti MAE, namun error besar diberi penalti lebih tinggi")
+
+    # Badge kategori AQI di bawah metric — selalu terlihat, termasuk mobile
+    badge_pred = aqi_badge_html(q50[0], TARGET)
+    badge_act  = aqi_badge_html(actual[0], TARGET)
+    b1, b2, b3, b4 = st.columns(4)
+    with b1:
+        st.markdown(badge_pred, unsafe_allow_html=True)
+    with b2:
+        st.markdown(badge_act, unsafe_allow_html=True)
+    with b3:
+        st.markdown(
+            '<span style="font-size:0.68rem;color:#475569;font-family:var(--mono)">rata-rata error</span>',
+            unsafe_allow_html=True
+        )
+    with b4:
+        st.markdown(
+            '<span style="font-size:0.68rem;color:#475569;font-family:var(--mono)">error ± penalti</span>',
+            unsafe_allow_html=True
+        )
+
     st.markdown(
         '<div class="mhint"><b>H+1</b> = jam pertama dari window prediksi. '
-        'Hover tiap kartu untuk melihat kategori AQI-nya. '
+        'Kategori AQI ditampilkan langsung di bawah nilai. '
         'MAE dan RMSE dihitung dari seluruh 24 jam prediksi.</div>',
         unsafe_allow_html=True
     )
