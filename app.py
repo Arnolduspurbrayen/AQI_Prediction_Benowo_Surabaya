@@ -1,3 +1,26 @@
+"""
+TFT AQI Forecasting App — Stasiun Benowo
+Streamlit app untuk prediksi AQI US & AQI CN 24 jam ke depan menggunakan Temporal Fusion Transformer.
+
+Cara menjalankan:
+    streamlit run app.py
+
+Struktur folder:
+    app.py
+    models/
+        AQI_US/
+            tft_Benowo_aqi_us_best.ckpt
+            hparams_best.json
+            tft_best_state_dict.pt
+        AQI_CN/
+            tft_Benowo_aqi_cn_best.ckpt
+            hparams_best.json
+            tft_best_state_dict.pt
+    pure_test_15_USpct.csv
+    pure_test_15_CNpct.csv
+    requirements.txt
+"""
+
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -1185,5 +1208,4 @@ st.markdown("""
     Binus University &middot; Jakarta &middot; 2026
   </span>
 </div>
-""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
