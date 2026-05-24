@@ -1,26 +1,3 @@
-"""
-TFT AQI Forecasting App — Stasiun Benowo
-Streamlit app untuk prediksi AQI US & AQI CN 24 jam ke depan menggunakan Temporal Fusion Transformer.
-
-Cara menjalankan:
-    streamlit run app.py
-
-Struktur folder:
-    app.py
-    models/
-        AQI_US/
-            tft_Benowo_aqi_us_best.ckpt
-            hparams_best.json
-            tft_best_state_dict.pt
-        AQI_CN/
-            tft_Benowo_aqi_cn_best.ckpt
-            hparams_best.json
-            tft_best_state_dict.pt
-    pure_test_15_USpct.csv
-    pure_test_15_CNpct.csv
-    requirements.txt
-"""
-
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -859,8 +836,9 @@ st.markdown("""
   </div>
   <div class="info-card">
     <div class="info-card-label">Standar AQI</div>
-    <div class="info-card-val"><b style="color:#cbd5e1">AQI US</b> &mdash; EPA Amerika
-      <small><b style="color:#cbd5e1">AQI CN</b> &mdash; China GB3095</small>
+    <div class="info-card-val">
+      <span style="color:#636EFA;font-weight:600;">AQI US</span> <span style="color:#475569;">—</span> EPA Amerika
+      <small><span style="color:#00CC96;font-weight:600;">AQI CN</span> <span style="color:#475569;">—</span> China GB3095</small>
     </div>
   </div>
   <div class="info-card">
@@ -872,65 +850,99 @@ st.markdown("""
 </div>
 
 <span class="ctx-label">Perbandingan Skala AQI · Referensi IQAir</span>
-<div style="overflow-x:auto;margin-bottom:0.5rem;">
-<table style="width:100%;border-collapse:collapse;font-size:0.73rem;font-family:'JetBrains Mono',monospace;">
+<div style="overflow-x:auto;margin-bottom:0.5rem;border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;">
+<table style="width:100%;border-collapse:collapse;font-size:0.72rem;font-family:'JetBrains Mono',monospace;min-width:520px;">
   <thead>
-    <tr style="border-bottom:2px solid rgba(255,255,255,0.12);">
-      <th style="text-align:left;padding:0.45rem 0.55rem;color:#636EFA;font-size:0.61rem;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;">🇺🇸 US AQI Level</th>
-      <th style="text-align:center;padding:0.45rem 0.55rem;color:#94a3b8;font-size:0.61rem;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;">US PM2.5<br/>(µg/m³)</th>
-      <th style="text-align:center;padding:0.45rem 0.55rem;color:#94a3b8;font-size:0.61rem;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;">China PM2.5<br/>(µg/m³)</th>
-      <th style="text-align:right;padding:0.45rem 0.55rem;color:#00CC96;font-size:0.61rem;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;">🇨🇳 China AQI Level</th>
+    <tr style="background:#0f1520;border-bottom:1px solid rgba(255,255,255,0.1);">
+      <th style="text-align:left;padding:0.55rem 0.75rem;color:#636EFA;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;width:26%;">🇺🇸 US AQI Level</th>
+      <th style="text-align:center;padding:0.55rem 0.5rem;color:#64748b;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;width:22%;">US PM2.5<br><span style="font-size:0.55rem;">(µg/m³)</span></th>
+      <th style="text-align:center;padding:0.55rem 0.5rem;color:#64748b;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;width:22%;">China PM2.5<br><span style="font-size:0.55rem;">(µg/m³)</span></th>
+      <th style="text-align:right;padding:0.55rem 0.75rem;color:#00CC96;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;width:30%;">🇨🇳 China AQI Level</th>
     </tr>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
-      <td colspan="4" style="padding:0.3rem 0.55rem;font-size:0.62rem;color:#475569;font-family:'Inter',sans-serif;text-align:center;">
-        WHO PM2.5 (µg/m³) Recommended Guidelines as of 2024: <b style="color:#94a3b8;">0 – 5.0</b>
+    <tr style="background:#0a0f1a;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <td colspan="4" style="padding:0.28rem 0.75rem;font-size:0.6rem;color:#334155;font-family:'Inter',sans-serif;text-align:center;letter-spacing:0.03em;">
+        WHO PM2.5 Recommended Guidelines 2024 &nbsp;·&nbsp; <b style="color:#475569;">0 – 5.0 µg/m³</b>
       </td>
     </tr>
   </thead>
   <tbody>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(0,228,0,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#00e400;font-weight:700;">Good</span> <span style="color:#475569;font-size:0.68rem;">0–50</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">0 – 9.0</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">0 – 35</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#00e400;font-weight:700;">Excellent</span> <span style="color:#475569;font-size:0.68rem;">0–50</span></td>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(0,228,0,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#00e400;font-weight:700;">Good</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">0–50</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">0 – 9.0</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">0 – 35</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#00e400;font-weight:700;">Excellent</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">0–50</span>
+      </td>
     </tr>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(212,212,0,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#d4d400;font-weight:700;">Moderate</span> <span style="color:#475569;font-size:0.68rem;">51–100</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">9.1 – 35.4</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">35.1 – 75</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#d4d400;font-weight:700;">Good</span> <span style="color:#475569;font-size:0.68rem;">51–100</span></td>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(180,160,0,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#c8b800;font-weight:700;">Moderate</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">51–100</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">9.1 – 35.4</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">35.1 – 75</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#c8b800;font-weight:700;">Good</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">51–100</span>
+      </td>
     </tr>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,126,0,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#ff7e00;font-weight:700;">Unhealthy for<br/>Sensitive Groups</span> <span style="color:#475569;font-size:0.68rem;">101–150</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">35.5 – 55.4</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">75.1 – 115</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#ff7e00;font-weight:700;">Lightly<br/>Polluted</span> <span style="color:#475569;font-size:0.68rem;">101–150</span></td>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(255,126,0,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#ff7e00;font-weight:700;">Unhealthy for<br>Sensitive Groups</span>
+        <span style="color:#334155;font-size:0.65rem;display:block;margin-top:0.1rem;">101–150</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">35.5 – 55.4</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">75.1 – 115</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#ff7e00;font-weight:700;">Lightly<br>Polluted</span>
+        <span style="color:#334155;font-size:0.65rem;display:block;margin-top:0.1rem;">101–150</span>
+      </td>
     </tr>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,68,68,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#ff4444;font-weight:700;">Unhealthy</span> <span style="color:#475569;font-size:0.68rem;">151–200</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">55.5 – 125.4</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">115.1 – 150</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#ff4444;font-weight:700;">Moderately<br/>Polluted</span> <span style="color:#475569;font-size:0.68rem;">151–200</span></td>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(220,50,50,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#e05252;font-weight:700;">Unhealthy</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">151–200</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">55.5 – 125.4</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">115.1 – 150</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#e05252;font-weight:700;">Moderately<br>Polluted</span>
+        <span style="color:#334155;font-size:0.65rem;display:block;margin-top:0.1rem;">151–200</span>
+      </td>
     </tr>
-    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(143,63,151,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#8f3f97;font-weight:700;">Very Unhealthy</span> <span style="color:#475569;font-size:0.68rem;">201–300</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">125.5 – 225.4</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">150.1 – 250</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#8f3f97;font-weight:700;">Heavily<br/>Polluted</span> <span style="color:#475569;font-size:0.68rem;">201–300</span></td>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(143,63,151,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#9b59b6;font-weight:700;">Very Unhealthy</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">201–300</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">125.5 – 225.4</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">150.1 – 250</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#9b59b6;font-weight:700;">Heavily<br>Polluted</span>
+        <span style="color:#334155;font-size:0.65rem;display:block;margin-top:0.1rem;">201–300</span>
+      </td>
     </tr>
-    <tr style="background:rgba(126,0,35,0.06);">
-      <td style="padding:0.38rem 0.55rem;"><span style="color:#c0392b;font-weight:700;">Hazardous</span> <span style="color:#475569;font-size:0.68rem;">301+</span></td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">225.5+</td>
-      <td style="text-align:center;padding:0.38rem 0.55rem;color:#94a3b8;">250.1 – 500</td>
-      <td style="text-align:right;padding:0.38rem 0.55rem;"><span style="color:#c0392b;font-weight:700;">Severely<br/>Polluted</span> <span style="color:#475569;font-size:0.68rem;">301+</span></td>
+    <tr style="background:rgba(126,0,35,0.04);">
+      <td style="padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#b03030;font-weight:700;">Hazardous</span>
+        <span style="color:#334155;font-size:0.65rem;margin-left:0.3rem;">301+</span>
+      </td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">225.5+</td>
+      <td style="text-align:center;padding:0.5rem 0.5rem;color:#64748b;vertical-align:middle;">250.1 – 500</td>
+      <td style="text-align:right;padding:0.5rem 0.75rem;vertical-align:middle;">
+        <span style="color:#b03030;font-weight:700;">Severely<br>Polluted</span>
+        <span style="color:#334155;font-size:0.65rem;display:block;margin-top:0.1rem;">301+</span>
+      </td>
     </tr>
   </tbody>
 </table>
 </div>
-<p style="font-size:0.67rem;color:#475569;margin-bottom:0.7rem;font-family:'Inter',sans-serif;line-height:1.6;">
-  ⚠️ Rentang AQI <b style="color:#94a3b8;">sama (0–500)</b> untuk kedua standar, namun ambang PM2.5 CN jauh lebih longgar.
-  Contoh: PM2.5 75 µg/m³ = <span style="color:#d4d400;">Moderate</span> (US) vs <span style="color:#00e400;">Excellent</span> (CN).
-  Sumber: <b style="color:#94a3b8;">IQAir · EPA 2024 · China GB3095</b>
+<p style="font-size:0.65rem;color:#334155;margin-bottom:0.7rem;font-family:'Inter',sans-serif;line-height:1.6;">
+  Sumber: <b style="color:#475569;">IQAir · EPA 2024 · China GB3095</b> &nbsp;·&nbsp; Rentang AQI kedua standar sama (0–500), ambang PM2.5 CN lebih longgar.
 </p>
 """, unsafe_allow_html=True)
 
