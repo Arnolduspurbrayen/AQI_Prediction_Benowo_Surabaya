@@ -516,7 +516,7 @@ code {
 /* ── METRIC HINT ── */
 .mhint {
     font-size: 0.75rem;
-    color: #64748b;
+    color: #94a3b8;
     line-height: 1.6;
     margin: 0.25rem 0 0.75rem;
 }
