@@ -516,7 +516,7 @@ code {
 /* ── METRIC HINT ── */
 .mhint {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: #64748b;
     line-height: 1.6;
     margin: 0.25rem 0 0.75rem;
 }
@@ -1200,11 +1200,11 @@ with tab1:
 st.markdown("---")
 st.markdown("""
 <div style="text-align:center;padding:0.5rem 0 1rem;">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#334155;">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#94a3b8;">
     AQI Prediction &middot; Benowo, Surabaya &middot; TFT
   </span>
   <br>
-  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#1e293b;">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#64748b;">
     Binus University &middot; Jakarta &middot; 2026
   </span>
 </div>
