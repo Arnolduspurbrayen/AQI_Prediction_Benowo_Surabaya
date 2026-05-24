@@ -590,12 +590,12 @@ def aqi_cn_category(val):
     if val is None or np.isnan(float(val)):
         return "N/A", "#888888"
     val = float(val)
-    if val <= 50:  return "Excellent", "#00e400"
-    if val <= 100: return "Good",      "#ffff00"
-    if val <= 150: return "Light",     "#ff7e00"
-    if val <= 200: return "Moderate",  "#ff0000"
-    if val <= 300: return "Heavy",     "#8f3f97"
-    return "Severe",                   "#7e0023"
+    if val <= 50:  return "Excellent",          "#00e400"
+    if val <= 100: return "Good",               "#ffff00"
+    if val <= 150: return "Lightly Polluted",   "#ff7e00"
+    if val <= 200: return "Mod. Polluted",      "#ff0000"
+    if val <= 300: return "Heavily Polluted",   "#8f3f97"
+    return "Severely Polluted",                 "#7e0023"
 
 
 def aqi_category(val, target="aqi_us"):
@@ -757,15 +757,25 @@ def run_prediction(model, training_dataset, df_window: pd.DataFrame):
 # AQI REFERENCE LINES
 # ══════════════════════════════════════════════════════════════════════════════
 
-AQI_HLINES = [
-    (50,  "Good",      "#39d353"),
-    (100, "Moderate",  "#d29922"),
-    (150, "Sensitive", "#ff7e00"),
-    (200, "Unhealthy", "#f85149"),
+AQI_HLINES_US = [
+    (50,  "Good",          "#39d353"),
+    (100, "Moderate",      "#d29922"),
+    (150, "Sensitive",     "#ff7e00"),
+    (200, "Unhealthy",     "#f85149"),
+    (300, "V. Unhealthy",  "#8f3f97"),
 ]
 
-def add_aqi_hlines(fig):
-    for level, label, color in AQI_HLINES:
+AQI_HLINES_CN = [
+    (50,  "Excellent",     "#39d353"),
+    (100, "Good",          "#d29922"),
+    (150, "Light Poll.",   "#ff7e00"),
+    (200, "Mod. Poll.",    "#f85149"),
+    (300, "Heavy Poll.",   "#8f3f97"),
+]
+
+def add_aqi_hlines(fig, target="aqi_us"):
+    lines = AQI_HLINES_CN if target == "aqi_cn" else AQI_HLINES_US
+    for level, label, color in lines:
         fig.add_hline(
             y=level, line_dash="dot", line_color=color,
             annotation_text=label,
@@ -861,15 +871,61 @@ st.markdown("""
   </div>
 </div>
 
-<span class="ctx-label">Kategori AQI</span>
-<div class="aqi-row">
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#00e400"></span>0&ndash;50 &nbsp;Baik</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#d4d400"></span>51&ndash;100 &nbsp;Sedang</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff7e00"></span>101&ndash;150 &nbsp;Sensitif</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#ff4444"></span>151&ndash;200 &nbsp;Tidak Sehat</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#8f3f97"></span>201&ndash;300 &nbsp;Sangat Tidak Sehat</span>
-  <span class="aqi-chip"><span class="aqi-dot" style="background:#7e0023"></span>&gt;300 &nbsp;Berbahaya</span>
+<span class="ctx-label">Perbandingan Skala AQI · Referensi IQAir (kedua standar: 0 – 500)</span>
+<div style="overflow-x:auto;margin-bottom:0.5rem;">
+<table style="width:100%;border-collapse:collapse;font-size:0.74rem;font-family:'JetBrains Mono',monospace;">
+  <thead>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+      <th style="text-align:left;padding:0.4rem 0.6rem;color:#475569;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;">Rentang</th>
+      <th style="text-align:left;padding:0.4rem 0.6rem;color:#636EFA;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;">🇺🇸 AQI US (EPA)</th>
+      <th style="text-align:left;padding:0.4rem 0.6rem;color:#00CC96;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;">🇨🇳 AQI CN (GB3095)</th>
+      <th style="text-align:center;padding:0.4rem 0.5rem;color:#475569;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">0 – 50</td>
+      <td style="padding:0.32rem 0.6rem;color:#00e400;font-weight:600;">Good</td>
+      <td style="padding:0.32rem 0.6rem;color:#00e400;font-weight:600;">Excellent</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#00e400;vertical-align:middle;"></span></td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">51 – 100</td>
+      <td style="padding:0.32rem 0.6rem;color:#d4d400;font-weight:600;">Moderate</td>
+      <td style="padding:0.32rem 0.6rem;color:#d4d400;font-weight:600;">Good</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#d4d400;vertical-align:middle;"></span></td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">101 – 150</td>
+      <td style="padding:0.32rem 0.6rem;color:#ff7e00;font-weight:600;">Unhealthy for Sensitive</td>
+      <td style="padding:0.32rem 0.6rem;color:#ff7e00;font-weight:600;">Lightly Polluted</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#ff7e00;vertical-align:middle;"></span></td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">151 – 200</td>
+      <td style="padding:0.32rem 0.6rem;color:#ff4444;font-weight:600;">Unhealthy</td>
+      <td style="padding:0.32rem 0.6rem;color:#ff4444;font-weight:600;">Moderately Polluted</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#ff4444;vertical-align:middle;"></span></td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">201 – 300</td>
+      <td style="padding:0.32rem 0.6rem;color:#8f3f97;font-weight:600;">Very Unhealthy</td>
+      <td style="padding:0.32rem 0.6rem;color:#8f3f97;font-weight:600;">Heavily Polluted</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#8f3f97;vertical-align:middle;"></span></td>
+    </tr>
+    <tr>
+      <td style="padding:0.32rem 0.6rem;color:#94a3b8;">301 – 500</td>
+      <td style="padding:0.32rem 0.6rem;color:#c0392b;font-weight:600;">Hazardous</td>
+      <td style="padding:0.32rem 0.6rem;color:#c0392b;font-weight:600;">Severely Polluted</td>
+      <td style="text-align:center;padding:0.32rem 0.5rem;"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:#7e0023;vertical-align:middle;"></span></td>
+    </tr>
+  </tbody>
+</table>
 </div>
+<p style="font-size:0.68rem;color:#475569;margin-bottom:0.7rem;font-family:'Inter',sans-serif;line-height:1.6;">
+  ⚠️ Rentang angka <b style="color:#94a3b8">sama (0–500)</b>, namun <b style="color:#94a3b8">nama kategori berbeda</b> karena standar PM2.5 CN lebih longgar.
+  Contoh: PM2.5 75 µg/m³ = <span style="color:#d4d400">Moderate</span> (US) vs <span style="color:#00e400">Excellent</span> (CN).
+</p>
 """, unsafe_allow_html=True)
 
 st.markdown('<span class="ctx-label">Pilih standar AQI yang digunakan</span>', unsafe_allow_html=True)
@@ -1073,7 +1129,7 @@ with tab1:
         mode="lines+markers", line=dict(color="#f85149", width=2, dash="dash"),
         marker=dict(size=5), name="Aktual",
     ))
-    fig = add_aqi_hlines(fig)
+    fig = add_aqi_hlines(fig, TARGET)
     fig.update_layout(
         title=f"Prediksi 24 Jam · {pred_dt_start.strftime('%d %b %Y')}",
         xaxis_title="Waktu", yaxis_title=selected_model,
