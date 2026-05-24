@@ -1178,7 +1178,12 @@ st.markdown("---")
 st.markdown("""
 <div style="text-align:center;padding:0.5rem 0 1rem;">
   <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#334155;">
-    AQI Forecast &middot; Stasiun Benowo &middot; TFT (pytorch-forecasting) &middot; EXP3 &middot; dropout=0.25 &middot; lr=3e-05 &middot; hidden=64 &middot; lstm_layers=2
+    AQI Prediction &middot; Benowo, Surabaya &middot; TFT
+  </span>
+  <br>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.67rem;color:#1e293b;">
+    Binus University &middot; Jakarta &middot; 2026
   </span>
 </div>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
