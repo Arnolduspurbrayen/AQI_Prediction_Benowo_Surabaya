@@ -1,24 +1,6 @@
 """
 TFT AQI Forecasting App — Stasiun Benowo
 Streamlit app untuk prediksi AQI US & AQI CN 24 jam ke depan menggunakan Temporal Fusion Transformer.
-
-Cara menjalankan:
-    streamlit run app.py
-
-Struktur folder:
-    app.py
-    models/
-        AQI_US/
-            tft_Benowo_aqi_us_best.ckpt
-            hparams_best.json
-            tft_best_state_dict.pt
-        AQI_CN/
-            tft_Benowo_aqi_cn_best.ckpt
-            hparams_best.json
-            tft_best_state_dict.pt
-    pure_test_15_USpct.csv
-    pure_test_15_CNpct.csv
-    requirements.txt
 """
 
 import os
@@ -37,10 +19,8 @@ import numpy as np
 import torch
 import plotly.graph_objects as go
 
-# ── Path config ────────────────────────────────────────────────────────────────
 APP_DIR = Path(__file__).parent
 
-# Model configs per target
 MODEL_CONFIGS = {
     "AQI US": {
         "target"    : "aqi_us",
@@ -60,7 +40,6 @@ MODEL_CONFIGS = {
     },
 }
 
-# ── TFT config (shared) ───────────────────────────────────────────────────────
 STATION               = "Benowo"
 MAX_ENCODER_LENGTH    = 192
 MIN_ENCODER_LENGTH    = 96
@@ -71,14 +50,12 @@ TIME_VARYING_KNOWN_CAT  = ["month_cat", "hour_cat", "dayofweek_cat", "is_weekend
 TIME_VARYING_KNOWN_REAL = ["time_idx", "year", "hour_sin", "hour_cos",
                             "dow_sin", "dow_cos", "month_sin", "month_cos"]
 
-# ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="AQI Forecast · Benowo",
     page_icon="🌬️",
     layout="centered",
 )
 
-# ── Mobile-first minimal UI ──────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -106,13 +83,11 @@ html, body, [data-testid="stAppViewContainer"] {
     font-family: var(--font) !important;
 }
 
-/* ── HIDE CHROME ── */
 #MainMenu, footer, header,
 [data-testid="stDecoration"],
 [data-testid="stToolbar"],
 [data-testid="stSidebar"]        { display: none !important; }
 
-/* ── CONTAINER ── */
 .block-container {
     padding: 1rem 1rem 3rem !important;
     max-width: 680px !important;
@@ -125,10 +100,7 @@ html, body, [data-testid="stAppViewContainer"] {
     }
 }
 
-/* ── HERO ── */
-.hero {
-    padding: 1.25rem 0 0.5rem;
-}
+.hero { padding: 1.25rem 0 0.5rem; }
 .hero-title {
     font-size: 1.15rem !important;
     font-weight: 700 !important;
@@ -141,29 +113,13 @@ html, body, [data-testid="stAppViewContainer"] {
     font-size: 0.78rem !important;
     color: var(--muted) !important;
 }
-.hero-badge {
-    display: inline-block;
-    background: rgba(52,211,153,0.12);
-    color: var(--green);
-    border: 1px solid rgba(52,211,153,0.25);
-    border-radius: 20px;
-    padding: 0.2rem 0.7rem;
-    font-size: 0.68rem;
-    font-family: var(--mono);
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    vertical-align: middle;
-    margin-left: 0.5rem;
-}
 
-/* ── DIVIDER ── */
 hr {
     border: none !important;
     border-top: 1px solid var(--border) !important;
     margin: 0.8rem 0 !important;
 }
 
-/* ── MODEL SELECTOR (radio) ── */
 [data-testid="stRadio"] > label {
     font-size: 0.72rem !important;
     font-weight: 600 !important;
@@ -188,7 +144,6 @@ hr {
     background: rgba(56,189,248,0.06) !important;
 }
 
-/* ── METRIC CARDS ── */
 [data-testid="stMetric"] {
     background: var(--card) !important;
     border: 1px solid var(--border) !important;
@@ -211,7 +166,6 @@ hr {
 }
 [data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
 
-/* ── AQI CATEGORY BADGE (Rule 8 fix: visible on mobile) ── */
 .aqi-badge-inline {
     display: inline-block;
     font-size: 0.68rem;
@@ -223,10 +177,8 @@ hr {
     letter-spacing: 0.04em;
 }
 
-/* ── COLUMNS gap ── */
 [data-testid="stHorizontalBlock"] { gap: 0.6rem !important; }
 
-/* ── TABS ── */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: var(--card) !important;
     border: 1px solid var(--border) !important;
@@ -254,7 +206,6 @@ hr {
 [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
 [data-testid="stTabsContent"] { padding-top: 1rem !important; }
 
-/* ── CHART WRAPPER ── */
 [data-testid="stPlotlyChart"] {
     border-radius: var(--radius) !important;
     overflow: hidden !important;
@@ -262,7 +213,6 @@ hr {
     background: var(--card) !important;
 }
 
-/* ── SECTION LABEL ── */
 .section-label {
     font-size: 0.68rem !important;
     font-weight: 700 !important;
@@ -274,7 +224,6 @@ hr {
     display: block;
 }
 
-/* ── SLIDER ── */
 [data-testid="stSlider"] [role="progressbar"] {
     background: linear-gradient(90deg, var(--accent), var(--green)) !important;
 }
@@ -288,7 +237,6 @@ hr {
     font-weight: 500 !important;
 }
 
-/* ── INPUTS ── */
 [data-baseweb="input"] > div,
 [data-baseweb="select"] > div:first-child {
     background: var(--card2) !important;
@@ -304,7 +252,6 @@ input, textarea { color: var(--text) !important; }
     font-weight: 500 !important;
 }
 
-/* ── BUTTONS ── */
 button[kind="primary"] {
     background: var(--accent) !important;
     color: #000 !important;
@@ -333,7 +280,6 @@ button[kind="secondary"], button:not([kind]) {
     width: 100% !important;
 }
 
-/* ── PRESET BUTTONS (Rule 2 fix) ── */
 .preset-row {
     display: flex;
     gap: 0.4rem;
@@ -350,7 +296,6 @@ button[kind="secondary"], button:not([kind]) {
     display: block;
 }
 
-/* ── EXPANDER ── */
 [data-testid="stExpander"] {
     background: var(--card) !important;
     border: 1px solid var(--border) !important;
@@ -364,7 +309,6 @@ button[kind="secondary"], button:not([kind]) {
     padding: 0.8rem 1rem !important;
 }
 
-/* ── DATAFRAME ── */
 [data-testid="stDataFrame"] {
     border-radius: var(--radius) !important;
     border: 1px solid var(--border) !important;
@@ -372,14 +316,12 @@ button[kind="secondary"], button:not([kind]) {
     font-size: 0.78rem !important;
 }
 
-/* ── ALERTS ── */
 [data-testid="stAlert"] {
     border-radius: 10px !important;
     border: none !important;
     font-size: 0.82rem !important;
 }
 
-/* ── PROGRESS ── */
 [data-testid="stProgress"] > div {
     background: linear-gradient(90deg, var(--accent), var(--green)) !important;
     border-radius: 6px !important;
@@ -389,7 +331,6 @@ button[kind="secondary"], button:not([kind]) {
     border-radius: 6px !important;
 }
 
-/* ── TYPOGRAPHY ── */
 h2, h3 {
     font-size: 0.88rem !important;
     font-weight: 600 !important;
@@ -412,8 +353,6 @@ code {
     padding: 0.1em 0.35em !important;
 }
 
-
-/* ── INFO CARDS ── */
 .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -448,7 +387,6 @@ code {
     margin-top: 0.1rem;
 }
 
-/* ── AQI LEGEND ── */
 .aqi-row {
     display: flex;
     flex-wrap: wrap;
@@ -474,7 +412,6 @@ code {
     flex-shrink: 0;
 }
 
-/* ── GUIDE BOX ── */
 .guide-box {
     background: #111620;
     border: 1px solid rgba(255,255,255,0.07);
@@ -502,7 +439,6 @@ code {
 }
 .guide-box li b { color: #cbd5e1; }
 
-/* ── SECTION DIVIDER LABEL ── */
 .ctx-label {
     font-size: 0.63rem;
     font-weight: 700;
@@ -513,7 +449,6 @@ code {
     display: block;
 }
 
-/* ── METRIC HINT ── */
 .mhint {
     font-size: 0.75rem;
     color: #64748b;
@@ -522,7 +457,6 @@ code {
 }
 .mhint b { color: #94a3b8; }
 
-/* ── ERROR BOX (Rule 5 fix: user-friendly) ── */
 .error-box {
     background: rgba(248,81,73,0.08);
     border: 1px solid rgba(248,81,73,0.25);
@@ -543,12 +477,10 @@ code {
     line-height: 1.6;
 }
 
-/* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 2px; }
 
-/* ── MOBILE STACKS ── */
 @media (max-width: 600px) {
     [data-testid="stHorizontalBlock"] {
         flex-direction: column !important;
@@ -570,9 +502,6 @@ code {
 </style>
 """, unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# HELPERS
-# ══════════════════════════════════════════════════════════════════════════════
 
 def aqi_us_category(val):
     if val is None or np.isnan(float(val)):
@@ -604,10 +533,8 @@ def aqi_category(val, target="aqi_us"):
     return aqi_us_category(val)
 
 
-# ── Rule 8 fix: render badge HTML visible on mobile ──────────────────────────
 def aqi_badge_html(val, target):
     label, color = aqi_category(val, target)
-    # pick readable text color
     text_color = "#000" if color in ("#00e400", "#ffff00", "#ff7e00") else "#fff"
     return (
         f'<span class="aqi-badge-inline" '
@@ -641,12 +568,7 @@ def add_features(df: pd.DataFrame, target: str) -> pd.DataFrame:
     return df
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ERROR HELPERS — Rule 5: user-friendly messages
-# ══════════════════════════════════════════════════════════════════════════════
-
 def show_friendly_error(title: str, message: str, detail: str = None):
-    """Tampilkan error yang ramah user tanpa stack trace teknis."""
     html = f"""
     <div class="error-box">
       <div class="error-box-title">⚠️ {title}</div>
@@ -659,10 +581,6 @@ def show_friendly_error(title: str, message: str, detail: str = None):
             st.code(detail, language="text")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# LOAD DATA
-# ══════════════════════════════════════════════════════════════════════════════
-
 @st.cache_data(show_spinner="Memuat data…")
 def load_test_data(path: str, target: str) -> pd.DataFrame:
     df = pd.read_csv(path)
@@ -674,10 +592,6 @@ def load_test_data(path: str, target: str) -> pd.DataFrame:
     df = add_features(df, target)
     return df
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# LOAD MODEL
-# ══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_resource(show_spinner="Memuat model TFT…")
 def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
@@ -727,10 +641,6 @@ def load_model_and_dataset(ckpt_path: str, df: pd.DataFrame, target: str):
         return model, training_dataset, n_test
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# INFERENCE
-# ══════════════════════════════════════════════════════════════════════════════
-
 def run_prediction(model, training_dataset, df_window: pd.DataFrame):
     with mock.patch("torch.cuda.is_available", return_value=False):
         from pytorch_forecasting import TimeSeriesDataSet
@@ -752,10 +662,6 @@ def run_prediction(model, training_dataset, df_window: pd.DataFrame):
         actual = (y[0] if isinstance(y, tuple) else y).numpy()[0]
         return pred_q[:MAX_PREDICTION_LENGTH], actual[:MAX_PREDICTION_LENGTH]
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# AQI REFERENCE LINES
-# ══════════════════════════════════════════════════════════════════════════════
 
 AQI_HLINES_US = [
     (50,  "Good",          "#39d353"),
@@ -832,10 +738,6 @@ PLOTLY_CONFIG = {
     "responsive": True,
 }
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# HEADER + MODEL SELECTOR
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown("""
 <div class="hero">
@@ -986,7 +888,6 @@ TEST_CSV   = cfg["csv_path"]
 LINE_COLOR = cfg["color"]
 FILL_COLOR = cfg["color2"]
 
-# ── Rule 5: Friendly file-not-found error ────────────────────────────────────
 if not CKPT_PATH.exists():
     show_friendly_error(
         "File Model Tidak Ditemukan",
@@ -1022,15 +923,8 @@ with st.spinner(f"Memuat model {selected_model}..."):
 
 n_test_eff = int(len(df_b) * 0.15)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TABS
-# ══════════════════════════════════════════════════════════════════════════════
-
 tab1, = st.tabs(["Prediksi"])
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 1
-# ─────────────────────────────────────────────────────────────────────────────
 with tab1:
     st.markdown(f'<span class="section-label">Prediksi {selected_model} · Data Test</span>', unsafe_allow_html=True)
     st.markdown("""
@@ -1041,7 +935,7 @@ with tab1:
     <li>Klik <b>Reset</b> kapan saja untuk kembali ke posisi awal.</li>
     <li>Model akan memprediksi <b>24 jam ke depan</b> secara otomatis.</li>
     <li>Grafik menampilkan prediksi (garis biru), nilai aktual (garis merah putus), dan rentang ketidakpastian Q10&ndash;Q90 (area abu).</li>
-    <li>Kartu di atas grafik menunjukkan nilai & kategori AQI jam pertama (H+1) serta error keseluruhan 24 jam.</li>
+    <li>Kartu di atas grafik menunjukkan nilai & kategori AQI jam pertama (H+1).</li>
   </ol>
 </div>
 """, unsafe_allow_html=True)
@@ -1057,10 +951,8 @@ with tab1:
         )
         st.stop()
 
-    # ── Rule 2: Preset shortcuts + Rule 6: Reset button ──────────────────────
     st.markdown('<span class="preset-label">Pilih cepat titik prediksi</span>', unsafe_allow_html=True)
 
-    # Inisialisasi session state untuk slider
     if "slider_offset" not in st.session_state:
         st.session_state["slider_offset"] = 0
 
@@ -1116,39 +1008,25 @@ with tab1:
 
     mae_val      = float(np.mean(np.abs(q50 - actual)))
     rmse_val     = float(np.sqrt(np.mean((q50 - actual) ** 2)))
-    cat_pred, _  = aqi_category(q50[0], TARGET)
-    cat_act,  _  = aqi_category(actual[0], TARGET)
 
-    # ── Rule 8: Tampilkan kategori langsung di bawah nilai, visible di mobile ──
-    c1, c2, c3, c4 = st.columns(4)
+    # ── Metric cards: hanya Prediksi & Aktual H+1 ─────────────────────────────
+    c1, c2 = st.columns(2)
     c1.metric(f"{selected_model} Prediksi (H+1)", f"{q50[0]:.1f}")
     c2.metric(f"{selected_model} Aktual (H+1)",   f"{actual[0]:.1f}")
-    c3.metric("MAE (24 jam)",  f"{mae_val:.2f}",  help="Rata-rata selisih absolut antara prediksi dan nilai aktual selama 24 jam")
-    c4.metric("RMSE (24 jam)", f"{rmse_val:.2f}", help="Seperti MAE, namun error besar diberi penalti lebih tinggi")
 
-    # Badge kategori AQI di bawah metric — selalu terlihat, termasuk mobile
+    # Badge kategori AQI di bawah metric
     badge_pred = aqi_badge_html(q50[0], TARGET)
     badge_act  = aqi_badge_html(actual[0], TARGET)
-    b1, b2, b3, b4 = st.columns(4)
+    b1, b2 = st.columns(2)
     with b1:
         st.markdown(badge_pred, unsafe_allow_html=True)
     with b2:
         st.markdown(badge_act, unsafe_allow_html=True)
-    with b3:
-        st.markdown(
-            '<span style="font-size:0.68rem;color:#475569;font-family:var(--mono)">rata-rata error</span>',
-            unsafe_allow_html=True
-        )
-    with b4:
-        st.markdown(
-            '<span style="font-size:0.68rem;color:#475569;font-family:var(--mono)">error ± penalti</span>',
-            unsafe_allow_html=True
-        )
 
     st.markdown(
         '<div class="mhint"><b>H+1</b> = jam pertama dari window prediksi. '
         'Kategori AQI ditampilkan langsung di bawah nilai. '
-        'MAE dan RMSE dihitung dari seluruh 24 jam prediksi.</div>',
+        'MAE dan RMSE tersedia di tabel detail.</div>',
         unsafe_allow_html=True
     )
 
@@ -1191,12 +1069,18 @@ with tab1:
             "Kategori Aktual"      : [aqi_category(v, TARGET)[0] for v in actual],
         })
         st.dataframe(df_result, use_container_width=True, hide_index=True)
+        # Tambahkan ringkasan MAE & RMSE di bawah tabel
+        st.markdown(
+            f'<div class="mhint" style="margin-top:0.5rem;">'
+            f'<b>MAE 24 jam:</b> {mae_val:.2f} &nbsp;·&nbsp; '
+            f'<b>RMSE 24 jam:</b> {rmse_val:.2f}</div>',
+            unsafe_allow_html=True
+        )
         csv_dl = df_result.to_csv(index=False).encode("utf-8")
         st.download_button("⬇️ Download CSV", csv_dl,
                            f"prediksi_{TARGET}_{pred_dt_start.strftime('%Y%m%d_%H%M')}.csv",
                            "text/csv")
 
-# ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("""
 <div style="text-align:center;padding:0.5rem 0 1rem;">
